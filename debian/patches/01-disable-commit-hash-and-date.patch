@@ -1,0 +1,17 @@
+Descripition: Disabling commit hash and compiled date as they are not needed
+in the debian package. These are shown when you invoke `micro --version`
+Thanks jmkim for the patch.
+
+--- a/cmd/micro/micro.go
++++ b/cmd/micro/micro.go
+@@ -312,8 +312,8 @@
+ 	if *flagVersion {
+ 		// If -version was passed
+ 		fmt.Println("Version:", Version)
+-		fmt.Println("Commit hash:", CommitHash)
+-		fmt.Println("Compiled on", CompileDate)
++		//fmt.Println("Commit hash:", CommitHash)
++		//fmt.Println("Compiled on", CompileDate)
+ 		os.Exit(0)
+ 	}
+ 

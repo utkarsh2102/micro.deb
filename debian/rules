@@ -2,12 +2,7 @@
 
 # Linker variables from upstream (micro) Makefile
 export VERSION := $(shell dpkg-parsechangelog -S Version)
-# TODO: As git is not in Build-Depends, print "unknown" instead when
-#       git is unavailable. Alternative way for getting the build hash
-#       is needed.
-export HASH := $(shell git rev-parse --short HEAD | echo unknown)
-export DATE := $(shell GOOS=$(shell go env GOHOSTOS) GOARCH=$(shell go env GOHOSTARCH) \
-	go run tools/build-date.go)
+
 export ADDITIONAL_GO_LINKER_FLAGS := $(shell GOOS=$(shell go env GOHOSTOS) \
 	GOARCH=$(shell go env GOHOSTARCH) \
 	go run tools/info-plist.go "$(VERSION)")
