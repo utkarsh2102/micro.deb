@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+
+# Linker variables from upstream (micro) Makefile
+export VERSION := $(shell dpkg-parsechangelog -S Version)
+# TODO: As git is not in Build-Depends, print "unknown" instead when
+#       git is unavailable. Alternative way for getting the build hash
+#       is needed.
+export HASH := $(shell git rev-parse --short HEAD | echo unknown)
+export DATE := $(shell GOOS=$(shell go env GOHOSTOS) GOARCH=$(shell go env GOHOSTARCH) \
+	go run tools/build-date.go)
+export ADDITIONAL_GO_LINKER_FLAGS := $(shell GOOS=$(shell go env GOHOSTOS) \
+	GOARCH=$(shell go env GOHOSTARCH) \
+	go run tools/info-plist.go "$(VERSION)")
+
+# Disable cgo to avoid lintian warn: 'hardening-no-fortify-functions'
+export CGO_ENABLED = 0
+
+# Define build target
+export DH_GOLANG_BUILDPKG := github.com/zyedidia/micro/cmd/micro
+
+%:
+	dh $@ --buildsystem=golang --with=golang
+
+override_dh_auto_build:
+	dh_auto_build -- -buildmode=pie \
+	-ldflags="-extldflags -Wl,-z,now -s -w -X main.Version=$(VERSION) -X main.CommitHash=$(HASH) -X 'main.CompileDate=$(DATE)' $(ADDITIONAL_GO_LINKER_FLAGS)"
+
+override_dh_auto_install:
+	dh_auto_install -- --no-source
+
+override_dh_auto_test:
