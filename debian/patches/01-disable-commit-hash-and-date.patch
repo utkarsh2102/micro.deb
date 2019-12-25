@@ -1,6 +1,8 @@
-Descripition: Disabling commit hash and compiled date as they are not needed
-in the debian package. These are shown when you invoke `micro --version`
-Thanks jmkim for the patch.
+Description: Disable commit hash and date
+ Disabling commit hash and compiled date as they are not needed in the
+ Debian package. These are shown when you invoke `micro --version`.
+Author: Jongmin Kim
+Last-Update: 25/12/2019
 
 --- a/cmd/micro/micro.go
 +++ b/cmd/micro/micro.go
