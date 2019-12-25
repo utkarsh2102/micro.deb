@@ -1,7 +1,0 @@
-# 'dpkg-parsechangelog -S Version' is needed to parse package version and
-# use it in d/rules.
-micro source: debian-rules-parses-dpkg-parsechangelog
-
-# Upstream license is MIT; Debian's copyright-format suggests use Expat instead.
-# https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-short-name
-micro source: inconsistent-appstream-metadata-license
