@@ -1,9 +1,11 @@
 Source: micro
-Section: editors
-Priority: optional
 Maintainer: Debian Go Packaging Team <team+pkg-go@tracker.debian.org>
-Uploaders: Raju Devidas <rajudev@disroot.org>
-Build-Depends: debhelper (>= 11),
+Uploaders: Raju Devidas <rajudev@disroot.org>,
+           Utkarsh Gupta <guptautkarsh2102@gmail.com>
+Section: editors
+Testsuite: autopkgtest-pkg-go
+Priority: optional
+Build-Depends: debhelper-compat (= 12),
                dh-golang,
                golang-any,
                golang-github-blang-semver-dev,
@@ -24,19 +26,19 @@ Build-Depends: debhelper (>= 11),
                golang-github-flynn-json5-dev,
                golang-github-zyedidia-pty-dev,
                golang-github-robertkrimen-otto-dev
-Standards-Version: 4.3.0
-Homepage: https://github.com/zyedidia/micro
+Standards-Version: 4.4.1
 Vcs-Browser: https://salsa.debian.org/go-team/packages/micro
 Vcs-Git: https://salsa.debian.org/go-team/packages/micro.git
+Homepage: https://micro-editor.github.io
 XS-Go-Import-Path: github.com/zyedidia/micro
-Testsuite: autopkgtest-pkg-go
+Rules-Requires-Root: no
 
 Package: micro
 Architecture: any
-Built-Using: ${misc:Built-Using}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Recommends: xclip
+Built-Using: ${misc:Built-Using}
 Description: modern and intuitive terminal-based text editor
  micro is a terminal-based text editor that aims to be easy to use and
  intuitive, while also taking advantage of the full capabilities of
