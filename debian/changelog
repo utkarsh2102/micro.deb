@@ -1,3 +1,13 @@
+micro (2.0.0-1) unstable; urgency=medium
+
+  * New upstream version 2.0.0
+  * Add patch to use original fork
+  * Update d/copyright wrt 2.0.0
+  * Fix d/control wrt cme
+  * Use @d.o address
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Wed, 12 Feb 2020 06:09:16 +0530
+
 micro (1.4.1-2) unstable; urgency=medium
 
   * Source-only upload
