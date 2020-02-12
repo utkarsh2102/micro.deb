@@ -4,57 +4,25 @@ Source: https://github.com/zyedidia/micro
 
 Files: *
 Copyright: 2016-2017, Zachary Yedidia, et al.
-License: Expat
-
-Files: cmd/micro/terminfo/*
-Copyright: 2016-2017, The TCell Authors
-License: Apache-2.0
+License: MIT
 
 Files: runtime/syntax/*
 Copyright: 2016, Zachary Yedidia, Collin Warren, et al.
-License: Expat
+License: MIT
 
 Files: runtime/plugins/autoclose/autoclose.lua
 Copyright: 2006-2007, Kyle Smith
 License: BSD-3-clause
 
-Files: cmd/micro/shellwords/*
-Copyright: 2017, Yasuhiro Matsumoto
-License: Expat
-
 Files: assets/packaging/micro.1
 Copyright: 2017, Collin Warren <anatoly@somethinghub.com>
            2017, Zachary Yedidia <zyedidia@gmail.com>
-License: Expat
+License: MIT
 
 Files: debian/*
 Copyright: 2019, Raju Devidas <rajudev@disroot.org>,
            2019, Utkarsh Gupta <guptautkarsh2102@gmail.com>
-License: Expat
-
-License: Expat
- Permission is hereby granted, free of charge, to any person obtaining
- a copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
- .
- The above copyright notice and this permission notice shall be
- included in all copies or substantial portions of the Software.
- .
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-License: Apache-2.0
- On Debian systems, a copy of the license could be found in
- /usr/share/common-licenses/Apache-2.0
+License: MIT
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
@@ -80,3 +48,23 @@ License: BSD-3-clause
  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+ .
+ The above copyright notice and this permission notice shall be
+ included in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
