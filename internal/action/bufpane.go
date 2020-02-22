@@ -113,6 +113,9 @@ func BufMapKey(k Event, action string) {
 		success := true
 		for i, a := range actionfns {
 			for j, c := range cursors {
+				if c == nil {
+					continue
+				}
 				h.Buf.SetCurCursor(c.Num)
 				h.Cursor = c
 				if i == 0 || (success && types[i-1] == '&') || (!success && types[i-1] == '|') || (types[i-1] == ',') {
@@ -272,8 +275,11 @@ func (h *BufPane) Name() string {
 
 // HandleEvent executes the tcell event properly
 func (h *BufPane) HandleEvent(event tcell.Event) {
-	if h.Buf.ExternallyModified() {
-		InfoBar.YNPrompt("The file on disk has changed. Reload file? (y,n)", func(yes, canceled bool) {
+	if h.Buf.ExternallyModified() && !h.Buf.ReloadDisabled {
+		InfoBar.YNPrompt("The file on disk has changed. Reload file? (y,n,esc)", func(yes, canceled bool) {
+			if canceled {
+				h.Buf.DisableReload()
+			}
 			if !yes || canceled {
 				h.Buf.UpdateModTime()
 			} else {
@@ -556,6 +562,7 @@ var BufKeyActions = map[string]BufKeyAction{
 	"Autocomplete":           (*BufPane).Autocomplete,
 	"CycleAutocompleteBack":  (*BufPane).CycleAutocompleteBack,
 	"OutdentLine":            (*BufPane).OutdentLine,
+	"IndentLine":             (*BufPane).IndentLine,
 	"Paste":                  (*BufPane).Paste,
 	"PastePrimary":           (*BufPane).PastePrimary,
 	"SelectAll":              (*BufPane).SelectAll,
@@ -661,6 +668,7 @@ var MultiActions = map[string]bool{
 	"IndentSelection":     true,
 	"OutdentSelection":    true,
 	"OutdentLine":         true,
+	"IndentLine":          true,
 	"Paste":               true,
 	"PastePrimary":        true,
 	"SelectPageUp":        true,
