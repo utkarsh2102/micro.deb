@@ -28,6 +28,7 @@ You can also check out the website for Micro at https://micro-editor.github.io.
   - [Prebuilt binaries](#prebuilt-binaries)
   - [Package Managers](#package-managers)
   - [Building from source](#building-from-source)
+  - [Fully static binary](#fully-static-binary)
   - [macOS terminal](#macos-terminal)
   - [Linux clipboard support](#linux-clipboard-support)
   - [Colors and syntax highlighting](#colors-and-syntax-highlighting)
@@ -106,13 +107,18 @@ You can install micro using Homebrew on Mac:
 brew install micro
 ```
 
-On Debian Linux, you can install micro through [snap](https://snapcraft.io/docs/core/install)
+On Linux, you can install micro through [snap](https://snapcraft.io/docs/core/install)
 
 ```
 snap install micro --classic
 ```
 
-Homebrew and snap are the two "officially" maintained package manager distributions of micro.
+On Debian `unstable | testing | buster-backports` and Ubuntu `focal` (20.04), micro is available
+via `apt`:
+
+```
+sudo apt install micro
+```
 
 Micro is also available through other package managers on Linux such as AUR, Nix, and package managers
 for other operating systems:

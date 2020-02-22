@@ -165,14 +165,14 @@ func RegisterGlobalOptionPlug(pl string, name string, defaultvalue interface{}) 
 // RegisterGlobalOption creates a new global-only option
 func RegisterGlobalOption(name string, defaultvalue interface{}) error {
 	if v, ok := GlobalSettings[name]; !ok {
-		defaultGlobalSettings[name] = defaultvalue
+		DefaultGlobalOnlySettings[name] = defaultvalue
 		GlobalSettings[name] = defaultvalue
 		err := WriteSettings(filepath.Join(ConfigDir, "settings.json"))
 		if err != nil {
 			return errors.New("Error writing settings.json file: " + err.Error())
 		}
 	} else {
-		defaultGlobalSettings[name] = v
+		DefaultGlobalOnlySettings[name] = v
 	}
 	return nil
 }
@@ -184,6 +184,7 @@ func GetGlobalOption(name string) interface{} {
 
 var defaultCommonSettings = map[string]interface{}{
 	"autoindent":     true,
+	"autosu":         true,
 	"backup":         true,
 	"basename":       false,
 	"colorcolumn":    float64(0),
@@ -244,7 +245,7 @@ func DefaultCommonSettings() map[string]interface{} {
 
 // a list of settings that should only be globally modified and their
 // default values
-var defaultGlobalSettings = map[string]interface{}{
+var DefaultGlobalOnlySettings = map[string]interface{}{
 	"autosave":       float64(0),
 	"colorscheme":    "default",
 	"infobar":        true,
@@ -270,7 +271,7 @@ func DefaultGlobalSettings() map[string]interface{} {
 	for k, v := range defaultCommonSettings {
 		globalsettings[k] = v
 	}
-	for k, v := range defaultGlobalSettings {
+	for k, v := range DefaultGlobalOnlySettings {
 		globalsettings[k] = v
 	}
 	return globalsettings
@@ -283,7 +284,7 @@ func DefaultAllSettings() map[string]interface{} {
 	for k, v := range defaultCommonSettings {
 		allsettings[k] = v
 	}
-	for k, v := range defaultGlobalSettings {
+	for k, v := range DefaultGlobalOnlySettings {
 		allsettings[k] = v
 	}
 	return allsettings
