@@ -270,7 +270,11 @@ func (h *BufPane) SetID(i uint64) {
 }
 
 func (h *BufPane) Name() string {
-	return h.Buf.GetName()
+	n := h.Buf.GetName()
+	if h.Buf.Modified() {
+		n += " +"
+	}
+	return n
 }
 
 // HandleEvent executes the tcell event properly
@@ -458,6 +462,7 @@ func (h *BufPane) DoRuneInsert(r rune) {
 		if recording_macro {
 			curmacro = append(curmacro, r)
 		}
+		h.Relocate()
 		h.PluginCBRune("onRune", r)
 	}
 }

@@ -184,15 +184,15 @@ func GetGlobalOption(name string) interface{} {
 
 var defaultCommonSettings = map[string]interface{}{
 	"autoindent":     true,
-	"autosu":         true,
+	"autosu":         false,
 	"backup":         true,
 	"basename":       false,
 	"colorcolumn":    float64(0),
 	"cursorline":     true,
 	"diffgutter":     false,
 	"encoding":       "utf-8",
-	"eofnewline":     false,
-	"fastdirty":      true,
+	"eofnewline":     true,
+	"fastdirty":      false,
 	"fileformat":     "unix",
 	"filetype":       "unknown",
 	"ignorecase":     false,
@@ -256,6 +256,7 @@ var DefaultGlobalOnlySettings = map[string]interface{}{
 	"sucmd":          "sudo",
 	"pluginchannels": []string{"https://raw.githubusercontent.com/micro-editor/plugin-channel/master/channel.json"},
 	"pluginrepos":    []string{},
+	"xterm":          false,
 }
 
 // a list of settings that should never be globally modified

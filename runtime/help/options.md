@@ -44,8 +44,8 @@ Here are the available options:
 
     default value: `true`
 
-* `basename`: in the infobar, show only the basename of the file being edited
-   rather than the full path.
+* `basename`: in the infobar and tabbar, show only the basename of the file
+   being edited rather than the full path.
 
     default value: `false`
 
@@ -85,9 +85,10 @@ Here are the available options:
 
     default value: `utf-8`
 
-* `eofnewline`: micro will automatically add a newline to the file.
+* `eofnewline`: micro will automatically add a newline to the end of the
+   file if one does not exist.
 
-	default value: `false`
+	default value: `true`
 
 * `fastdirty`: this determines what kind of algorithm micro uses to determine
    if a buffer is modified or not. When `fastdirty` is on, micro just uses a
@@ -95,10 +96,10 @@ Here are the available options:
    This is fast, but can be inaccurate. If `fastdirty` is off, then micro will
    hash the current buffer against a hash of the original file (created when
    the buffer was loaded). This is more accurate but obviously more resource
-   intensive. This option is only for people who really care about having
-   accurate modified status.
+   intensive. This option will be automatically disabled if the file size
+   exceeds 50KB.
 
-	default value: `true`
+	default value: `false`
 
 * `fileformat`: this determines what kind of line endings micro will use for
    the file. UNIX line endings are just `\n` (linefeed) whereas dos line
@@ -296,10 +297,32 @@ Here are the available options:
 
 	default value: `true`
 
+* `xterm`: micro will assume that the terminal it is running in conforms to
+  `xterm-256color` regardless of what the `$TERM` variable actually contains.
+   Enabling this option may cause unwanted effects if your terminal in fact
+   does not conform to the `xterm-256color` standard.
+
+    Default value: `false`
+
 ---
 
 Plugin options: all plugins come with a special option to enable or disable
 them. The option is a boolean with the same name as the plugin itself.
+
+By default, the following plugins are provided, each with an option to enable
+or disable them:
+
+* `autoclose`: automatically closes brackets, quotes, etc...
+* `comment`: provides automatic commenting for a number of languages
+* `ftoptions`: alters some default options depending on the filetype
+* `linter`: provides extensible linting for many languages
+* `literate`: provides advanced syntax highlighting for the Literate
+   programming tool.
+* `status`: provides some extensions to the status line (integration with
+   Git and more).
+* `diff`: integrates the `diffgutter` option with Git. If you are in a Git
+   directory, the diff gutter will show changes with respect to the most
+   recent Git commit rather than the diff since opening the file.
 
 Any option you set in the editor will be saved to the file
 ~/.config/micro/settings.json so, in effect, your configuration file will be 
