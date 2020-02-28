@@ -91,7 +91,7 @@ Running `micro -version` will give you the version information.
 
 There is a script which can install micro for you by downloading the latest prebuilt binary. You can find it at <https://getmic.ro>.
 
-Then you can easily install micro:
+You can easily install micro by running
 
 ```bash
 curl https://getmic.ro | bash
@@ -128,6 +128,8 @@ for other operating systems:
     * `scoop install micro`
 * OpenBSD: Available in the ports tree and also available as a binary package
     * `pkd_add -v micro`
+* Arch Linux, CRUX, Termux for Android
+    * See details in the [wiki page](https://github.com/zyedidia/micro/wiki/Installing-Micro)
 
 ### Building from source
 
@@ -170,15 +172,12 @@ If you still insist on using the default Mac terminal, be sure to set `Use Optio
 
 ### Linux clipboard support
 
-On Linux, clipboard support requires the `xclip` or `xsel` commands to be installed.
+On Linux, clipboard support requires:
 
-For Ubuntu:
+- On X11, the `xclip` or `xsel` commands (for Ubuntu: `sudo apt install xclip`)
+- On Wayland, the `wl-clipboard` command
 
-```sh
-sudo apt-get install xclip
-```
-
-If you don't have `xclip` or `xsel`, micro will use an internal clipboard for copy and paste, but it won't work with external applications.
+If you don't have these commands, micro will use an internal clipboard for copy and paste, but it won't work with external applications.
 
 ### Colors and syntax highlighting
 
