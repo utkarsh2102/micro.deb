@@ -1,3 +1,9 @@
+micro (2.0.2-2) unstable; urgency=medium
+
+  * Fix micro versioning issue (Closes: #953400)
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Tue, 17 Mar 2020 03:32:17 +0530
+
 micro (2.0.2-1~bpo10+1) buster-backports; urgency=medium
 
   * Rebuild for buster-backports.
