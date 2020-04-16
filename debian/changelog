@@ -1,3 +1,12 @@
+micro (2.0.3-1) unstable; urgency=medium
+
+  * New upstream version 2.0.3
+    - Support +LINE:COL flag syntax for cursor position (Closes: #953427)
+  * Make d/watch cleaner
+  * Refresh patch
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Thu, 16 Apr 2020 17:53:55 +0530
+
 micro (2.0.2-3) unstable; urgency=medium
 
   * Tweak d/rules to just show the upstream version and not the Debian revision
