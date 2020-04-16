@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -60,6 +61,9 @@ var (
 	BTRaw = BufType{4, false, true, false}
 	// BTInfo is a buffer for inputting information
 	BTInfo = BufType{5, false, true, false}
+	// BTStdout is a buffer that only writes to stdout
+	// when closed
+	BTStdout = BufType{6, false, true, true}
 
 	// ErrFileTooLarge is returned when the file is too large to hash
 	// (fastdirty is automatically enabled)
@@ -81,6 +85,8 @@ type SharedBuffer struct {
 	AbsPath string
 	// Name of the buffer on the status line
 	name string
+
+	toStdout bool
 
 	// Settings customized by the user
 	Settings map[string]interface{}
@@ -355,6 +361,10 @@ func (b *Buffer) Fini() {
 		b.Serialize()
 	}
 	b.RemoveBackup()
+
+	if b.Type == BTStdout {
+		fmt.Fprint(util.Stdout, string(b.Bytes()))
+	}
 }
 
 // GetName returns the name that should be displayed in the statusline
@@ -538,7 +548,37 @@ func (b *Buffer) UpdateRules() {
 		return
 	}
 	syntaxFile := ""
+	foundDef := false
 	var header *highlight.Header
+	// search for the syntax file in the user's custom syntax files
+	for _, f := range config.ListRealRuntimeFiles(config.RTSyntax) {
+		data, err := f.Data()
+		if err != nil {
+			screen.TermMessage("Error loading syntax file " + f.Name() + ": " + err.Error())
+			continue
+		}
+
+		header, err = highlight.MakeHeaderYaml(data)
+		file, err := highlight.ParseFile(data)
+		if err != nil {
+			screen.TermMessage("Error parsing syntax file " + f.Name() + ": " + err.Error())
+			continue
+		}
+
+		if ((ft == "unknown" || ft == "") && highlight.MatchFiletype(header.FtDetect, b.Path, b.lines[0].data)) || header.FileType == ft {
+			syndef, err := highlight.ParseDef(file, header)
+			if err != nil {
+				screen.TermMessage("Error parsing syntax file " + f.Name() + ": " + err.Error())
+				continue
+			}
+			b.SyntaxDef = syndef
+			syntaxFile = f.Name()
+			foundDef = true
+			break
+		}
+	}
+
+	// search in the default syntax files
 	for _, f := range config.ListRuntimeFiles(config.RTSyntaxHeader) {
 		data, err := f.Data()
 		if err != nil {
@@ -563,33 +603,8 @@ func (b *Buffer) UpdateRules() {
 		}
 	}
 
-	if syntaxFile == "" {
-		// search for the syntax file in the user's custom syntax files
-		for _, f := range config.ListRealRuntimeFiles(config.RTSyntax) {
-			data, err := f.Data()
-			if err != nil {
-				screen.TermMessage("Error loading syntax file " + f.Name() + ": " + err.Error())
-				continue
-			}
-
-			header, err = highlight.MakeHeaderYaml(data)
-			file, err := highlight.ParseFile(data)
-			if err != nil {
-				screen.TermMessage("Error parsing syntax file " + f.Name() + ": " + err.Error())
-				continue
-			}
-
-			if ((ft == "unknown" || ft == "") && highlight.MatchFiletype(header.FtDetect, b.Path, b.lines[0].data)) || header.FileType == ft {
-				syndef, err := highlight.ParseDef(file, header)
-				if err != nil {
-					screen.TermMessage("Error parsing syntax file " + f.Name() + ": " + err.Error())
-					continue
-				}
-				b.SyntaxDef = syndef
-				break
-			}
-		}
-	} else {
+	if syntaxFile != "" && !foundDef {
+		// we found a syntax file using a syntax header file
 		for _, f := range config.ListRuntimeFiles(config.RTSyntax) {
 			if f.Name() == syntaxFile {
 				data, err := f.Data()

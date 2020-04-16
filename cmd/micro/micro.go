@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"runtime"
 	"sort"
 	"time"
@@ -44,6 +45,7 @@ func InitFlags() {
 		fmt.Println("-config-dir dir")
 		fmt.Println("    \tSpecify a custom location for the configuration directory")
 		fmt.Println("[FILE]:LINE:COL")
+		fmt.Println("+LINE:COL")
 		fmt.Println("    \tSpecify a line and column to start the cursor at when opening a buffer")
 		fmt.Println("-options")
 		fmt.Println("    \tShow all option help")
@@ -147,11 +149,32 @@ func LoadInput() []*buffer.Buffer {
 	args := flag.Args()
 	buffers := make([]*buffer.Buffer, 0, len(args))
 
-	if len(args) > 0 {
+	btype := buffer.BTDefault
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		btype = buffer.BTStdout
+	}
+
+	files := make([]string, 0, len(args))
+	flagStartPos := ""
+	flagr := regexp.MustCompile(`^\+\d+(:\d+)?$`)
+	for _, a := range args {
+		if flagr.MatchString(a) {
+			flagStartPos = a[1:]
+		} else {
+			if flagStartPos != "" {
+				files = append(files, a+":"+flagStartPos)
+				flagStartPos = ""
+			} else {
+				files = append(files, a)
+			}
+		}
+	}
+
+	if len(files) > 0 {
 		// Option 1
 		// We go through each file and load it
-		for i := 0; i < len(args); i++ {
-			buf, err := buffer.NewBufferFromFile(args[i], buffer.BTDefault)
+		for i := 0; i < len(files); i++ {
+			buf, err := buffer.NewBufferFromFile(files[i], btype)
 			if err != nil {
 				screen.TermMessage(err)
 				continue
@@ -168,17 +191,22 @@ func LoadInput() []*buffer.Buffer {
 			screen.TermMessage("Error reading from stdin: ", err)
 			input = []byte{}
 		}
-		buffers = append(buffers, buffer.NewBufferFromString(string(input), filename, buffer.BTDefault))
+		buffers = append(buffers, buffer.NewBufferFromString(string(input), filename, btype))
 	} else {
 		// Option 3, just open an empty buffer
-		buffers = append(buffers, buffer.NewBufferFromString(string(input), filename, buffer.BTDefault))
+		buffers = append(buffers, buffer.NewBufferFromString(string(input), filename, btype))
 	}
 
 	return buffers
 }
 
 func main() {
-	defer os.Exit(0)
+	defer func() {
+		if util.Stdout.Len() > 0 {
+			fmt.Fprint(os.Stdout, util.Stdout.String())
+		}
+		os.Exit(0)
+	}()
 
 	// runtime.SetCPUProfileRate(400)
 	// f, _ := os.Create("micro.prof")
