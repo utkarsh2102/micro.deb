@@ -79,13 +79,14 @@ func check(t *testing.T, before []string, operations []operation, after []string
 		cursor := cursors[i]
 		b.SetCurCursor(cursor.Num)
 		cursor.DeleteSelection()
-		cursor.ResetSelection()
 		b.Insert(cursor.Loc, strings.Join(op.text, "\n"))
 	}
 
 	checkText(after)
 
-	for b.UndoStack.Peek() != nil {
+	// must have exactly two events per operation (delete and insert)
+	for range operations {
+		b.UndoOneEvent()
 		b.UndoOneEvent()
 	}
 
@@ -93,7 +94,7 @@ func check(t *testing.T, before []string, operations []operation, after []string
 
 	for i, op := range operations {
 		cursor := cursors[i]
-		if !cursor.HasSelection() {
+		if op.start == op.end {
 			assert.Equal(op.start, cursor.Loc)
 		} else {
 			assert.Equal(op.start, cursor.CurSelection[0])
@@ -101,7 +102,8 @@ func check(t *testing.T, before []string, operations []operation, after []string
 		}
 	}
 
-	for b.RedoStack.Peek() != nil {
+	for range operations {
+		b.RedoOneEvent()
 		b.RedoOneEvent()
 	}
 
