@@ -5,8 +5,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/zyedidia/micro/internal/config"
-	"github.com/zyedidia/micro/internal/util"
+	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/util"
 	"github.com/zyedidia/tcell"
 )
 
@@ -127,7 +127,7 @@ func TempStart(screenWasNil bool) {
 
 // Init creates and initializes the tcell screen
 func Init() {
-	drawChan = make(chan bool)
+	drawChan = make(chan bool, 8)
 
 	// Should we enable true color?
 	truecolor := os.Getenv("MICRO_TRUECOLOR") == "1"

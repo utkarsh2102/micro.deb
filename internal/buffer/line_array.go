@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"io"
 	"sync"
-	"unicode/utf8"
 
-	"github.com/zyedidia/micro/pkg/highlight"
+	"github.com/zyedidia/micro/v2/internal/util"
+	"github.com/zyedidia/micro/v2/pkg/highlight"
 )
 
 // Finds the byte index of the nth rune in a byte slice
@@ -19,7 +19,7 @@ func runeToByteIndex(n int, txt []byte) int {
 	count := 0
 	i := 0
 	for len(txt) > 0 {
-		_, size := utf8.DecodeRune(txt)
+		_, _, size := util.DecodeCharacter(txt)
 
 		txt = txt[size:]
 		count += size
@@ -299,7 +299,7 @@ func (la *LineArray) Start() Loc {
 // End returns the location of the last character in the buffer
 func (la *LineArray) End() Loc {
 	numlines := len(la.lines)
-	return Loc{utf8.RuneCount(la.lines[numlines-1].data), numlines - 1}
+	return Loc{util.CharacterCount(la.lines[numlines-1].data), numlines - 1}
 }
 
 // LineBytes returns line n as an array of bytes

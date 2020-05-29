@@ -12,7 +12,7 @@ import (
 
 	"github.com/zyedidia/glob"
 	"github.com/zyedidia/json5"
-	"github.com/zyedidia/micro/internal/util"
+	"github.com/zyedidia/micro/v2/internal/util"
 	"golang.org/x/text/encoding/htmlindex"
 )
 
@@ -248,6 +248,8 @@ func DefaultCommonSettings() map[string]interface{} {
 var DefaultGlobalOnlySettings = map[string]interface{}{
 	"autosave":       float64(0),
 	"colorscheme":    "default",
+	"divchars":       "|-",
+	"divreverse":     true,
 	"infobar":        true,
 	"keymenu":        false,
 	"mouse":          true,

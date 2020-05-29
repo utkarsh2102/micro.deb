@@ -10,14 +10,13 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	shellquote "github.com/kballard/go-shellquote"
-	"github.com/zyedidia/micro/internal/buffer"
-	"github.com/zyedidia/micro/internal/config"
-	"github.com/zyedidia/micro/internal/screen"
-	"github.com/zyedidia/micro/internal/shell"
-	"github.com/zyedidia/micro/internal/util"
+	"github.com/zyedidia/micro/v2/internal/buffer"
+	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/screen"
+	"github.com/zyedidia/micro/v2/internal/shell"
+	"github.com/zyedidia/micro/v2/internal/util"
 )
 
 // A Command contains information about how to execute a command
@@ -56,6 +55,7 @@ func InitCommands() {
 		"cd":         {(*BufPane).CdCmd, buffer.FileComplete},
 		"pwd":        {(*BufPane).PwdCmd, nil},
 		"open":       {(*BufPane).OpenCmd, buffer.FileComplete},
+		"tabmove":    {(*BufPane).TabMoveCmd, nil},
 		"tabswitch":  {(*BufPane).TabSwitchCmd, nil},
 		"term":       {(*BufPane).TermCmd, nil},
 		"memusage":   {(*BufPane).MemUsageCmd, nil},
@@ -153,6 +153,56 @@ func (h *BufPane) TextFilterCmd(args []string) {
 	}
 	h.Cursor.DeleteSelection()
 	h.Buf.Insert(h.Cursor.Loc, bout.String())
+}
+
+// TabMoveCmd moves the current tab to a given index (starts at 1). The
+// displaced tabs are moved up.
+func (h *BufPane) TabMoveCmd(args []string) {
+	if len(args) <= 0 {
+		InfoBar.Error("Not enough arguments: provide an index, starting at 1")
+		return
+	}
+
+	if len(args[0]) <= 0 {
+		InfoBar.Error("Invalid argument: empty string")
+		return
+	}
+
+	num, err := strconv.Atoi(args[0])
+	if err != nil {
+		InfoBar.Error("Invalid argument: ", err)
+		return
+	}
+
+	// Preserve sign for relative move, if one exists
+	var shiftDirection byte
+	if strings.Contains("-+", string([]byte{args[0][0]})) {
+		shiftDirection = args[0][0]
+	}
+
+	// Relative positions -> absolute positions
+	idxFrom := Tabs.Active()
+	idxTo := 0
+	offset := util.Abs(num)
+	if shiftDirection == '-' {
+		idxTo = idxFrom - offset
+	} else if shiftDirection == '+' {
+		idxTo = idxFrom + offset
+	} else {
+		idxTo = offset - 1
+	}
+
+	// Restrain position to within the valid range
+	idxTo = util.Clamp(idxTo, 0, len(Tabs.List)-1)
+
+	activeTab := Tabs.List[idxFrom]
+	Tabs.RemoveTab(activeTab.ID())
+	Tabs.List = append(Tabs.List, nil)
+	copy(Tabs.List[idxTo+1:], Tabs.List[idxTo:])
+	Tabs.List[idxTo] = activeTab
+	Tabs.UpdateNames()
+	Tabs.SetActive(idxTo)
+	// InfoBar.Message(fmt.Sprintf("Moved tab from slot %d to %d", idxFrom+1, idxTo+1))
 }
 
 // TabSwitchCmd switches to a given tab either by name or by number
@@ -652,7 +702,7 @@ func (h *BufPane) GotoCmd(args []string) {
 				return
 			}
 			line = util.Clamp(line-1, 0, h.Buf.LinesNum()-1)
-			col = util.Clamp(col-1, 0, utf8.RuneCount(h.Buf.LineBytes(line)))
+			col = util.Clamp(col-1, 0, util.CharacterCount(h.Buf.LineBytes(line)))
 			h.Cursor.GotoLoc(buffer.Loc{col, line})
 		} else {
 			line, err := strconv.Atoi(args[0])
@@ -761,6 +811,7 @@ func (h *BufPane) ReplaceCmd(args []string) {
 
 			h.Cursor.SetSelectionStart(locs[0])
 			h.Cursor.SetSelectionEnd(locs[1])
+			h.Cursor.GotoLoc(locs[0])
 
 			h.Relocate()
 
@@ -775,7 +826,7 @@ func (h *BufPane) ReplaceCmd(args []string) {
 					nreplaced++
 				} else if !canceled && !yes {
 					searchLoc = locs[0]
-					searchLoc.X += utf8.RuneCount(replace)
+					searchLoc.X += util.CharacterCount(replace)
 				} else if canceled {
 					h.Cursor.ResetSelection()
 					h.Buf.RelocateCursors()

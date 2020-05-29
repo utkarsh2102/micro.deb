@@ -185,11 +185,13 @@ Save
 SaveAll
 SaveAs
 Find
+FindLiteral
 FindNext
 FindPrevious
 Undo
 Redo
 Copy
+CopyLine
 Cut
 CutLine
 DuplicateLine
@@ -455,7 +457,7 @@ conventions for text editing defaults.
     "CtrlP":          "FindPrevious",
     "CtrlZ":          "Undo",
     "CtrlY":          "Redo",
-    "CtrlC":          "Copy",
+    "CtrlC":          "CopyLine|Copy",
     "CtrlX":          "Cut",
     "CtrlK":          "CutLine",
     "CtrlD":          "DuplicateLine",
