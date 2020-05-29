@@ -5,15 +5,14 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	shellquote "github.com/kballard/go-shellquote"
 	"github.com/zyedidia/clipboard"
-	"github.com/zyedidia/micro/internal/buffer"
-	"github.com/zyedidia/micro/internal/config"
-	"github.com/zyedidia/micro/internal/screen"
-	"github.com/zyedidia/micro/internal/shell"
-	"github.com/zyedidia/micro/internal/util"
+	"github.com/zyedidia/micro/v2/internal/buffer"
+	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/screen"
+	"github.com/zyedidia/micro/v2/internal/shell"
+	"github.com/zyedidia/micro/v2/internal/util"
 	"github.com/zyedidia/tcell"
 )
 
@@ -175,7 +174,7 @@ func (h *BufPane) CursorRight() bool {
 		if tabstospaces && tabmovement {
 			tabsize := int(h.Buf.Settings["tabsize"].(float64))
 			line := h.Buf.LineBytes(h.Cursor.Y)
-			if h.Cursor.X+tabsize < utf8.RuneCount(line) && util.IsSpaces(line[h.Cursor.X:h.Cursor.X+tabsize]) && util.IsBytesWhitespace(line[0:h.Cursor.X]) {
+			if h.Cursor.X+tabsize < util.CharacterCount(line) && util.IsSpaces(line[h.Cursor.X:h.Cursor.X+tabsize]) && util.IsBytesWhitespace(line[0:h.Cursor.X]) {
 				for i := 0; i < tabsize; i++ {
 					h.Cursor.Right()
 				}
@@ -354,7 +353,6 @@ func (h *BufPane) SelectToStartOfTextToggle() bool {
 	return true
 }
 
-
 // SelectToStartOfLine selects to the start of the current line
 func (h *BufPane) SelectToStartOfLine() bool {
 	if !h.Cursor.HasSelection() {
@@ -487,7 +485,7 @@ func (h *BufPane) InsertNewline() bool {
 		// Remove the whitespaces if keepautoindent setting is off
 		if util.IsSpacesOrTabs(h.Buf.LineBytes(h.Cursor.Y-1)) && !h.Buf.Settings["keepautoindent"].(bool) {
 			line := h.Buf.LineBytes(h.Cursor.Y - 1)
-			h.Buf.Remove(buffer.Loc{X: 0, Y: h.Cursor.Y - 1}, buffer.Loc{X: utf8.RuneCount(line), Y: h.Cursor.Y - 1})
+			h.Buf.Remove(buffer.Loc{X: 0, Y: h.Cursor.Y - 1}, buffer.Loc{X: util.CharacterCount(line), Y: h.Cursor.Y - 1})
 		}
 	}
 	h.Cursor.LastVisualX = h.Cursor.GetVisualX()
@@ -512,7 +510,7 @@ func (h *BufPane) Backspace() bool {
 		// tab (tabSize number of spaces)
 		lineStart := util.SliceStart(h.Buf.LineBytes(h.Cursor.Y), h.Cursor.X)
 		tabSize := int(h.Buf.Settings["tabsize"].(float64))
-		if h.Buf.Settings["tabstospaces"].(bool) && util.IsSpaces(lineStart) && len(lineStart) != 0 && utf8.RuneCount(lineStart)%tabSize == 0 {
+		if h.Buf.Settings["tabstospaces"].(bool) && util.IsSpaces(lineStart) && len(lineStart) != 0 && util.CharacterCount(lineStart)%tabSize == 0 {
 			loc := h.Cursor.Loc
 			h.Buf.Remove(loc.Move(-tabSize, h.Buf), loc)
 		} else {
@@ -803,10 +801,23 @@ func (h *BufPane) saveBufToFile(filename string, action string, callback func())
 
 // Find opens a prompt and searches forward for the input
 func (h *BufPane) Find() bool {
+	return h.find(true)
+}
+
+// FindLiteral is the same as Find() but does not support regular expressions
+func (h *BufPane) FindLiteral() bool {
+	return h.find(false)
+}
+
+func (h *BufPane) find(useRegex bool) bool {
 	h.searchOrig = h.Cursor.Loc
-	InfoBar.Prompt("Find (regex): ", "", "Find", func(resp string) {
+	prompt := "Find: "
+	if useRegex {
+		prompt = "Find (regex): "
+	}
+	InfoBar.Prompt(prompt, "", "Find", func(resp string) {
 		// Event callback
-		match, found, _ := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, true)
+		match, found, _ := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
 		if found {
 			h.Cursor.SetSelectionStart(match[0])
 			h.Cursor.SetSelectionEnd(match[1])
@@ -821,7 +832,7 @@ func (h *BufPane) Find() bool {
 	}, func(resp string, canceled bool) {
 		// Finished callback
 		if !canceled {
-			match, found, err := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, true)
+			match, found, err := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
 			if err != nil {
 				InfoBar.Error(err)
 			}
@@ -832,6 +843,7 @@ func (h *BufPane) Find() bool {
 				h.Cursor.OrigSelection[1] = h.Cursor.CurSelection[1]
 				h.Cursor.GotoLoc(h.Cursor.CurSelection[1])
 				h.lastSearch = resp
+				h.lastSearchRegex = useRegex
 			} else {
 				h.Cursor.ResetSelection()
 				InfoBar.Message("No matches found")
@@ -855,7 +867,7 @@ func (h *BufPane) FindNext() bool {
 	if h.Cursor.HasSelection() {
 		searchLoc = h.Cursor.CurSelection[1]
 	}
-	match, found, err := h.Buf.FindNext(h.lastSearch, h.Buf.Start(), h.Buf.End(), searchLoc, true, true)
+	match, found, err := h.Buf.FindNext(h.lastSearch, h.Buf.Start(), h.Buf.End(), searchLoc, true, h.lastSearchRegex)
 	if err != nil {
 		InfoBar.Error(err)
 	}
@@ -882,7 +894,7 @@ func (h *BufPane) FindPrevious() bool {
 	if h.Cursor.HasSelection() {
 		searchLoc = h.Cursor.CurSelection[0]
 	}
-	match, found, err := h.Buf.FindNext(h.lastSearch, h.Buf.Start(), h.Buf.End(), searchLoc, false, true)
+	match, found, err := h.Buf.FindNext(h.lastSearch, h.Buf.Start(), h.Buf.End(), searchLoc, false, h.lastSearchRegex)
 	if err != nil {
 		InfoBar.Error(err)
 	}
@@ -926,6 +938,25 @@ func (h *BufPane) Copy() bool {
 			InfoBar.Message("Copied selection")
 		}
 	}
+	h.Relocate()
+	return true
+}
+
+// Copy the current line to the clipboard
+func (h *BufPane) CopyLine() bool {
+	if h.Cursor.HasSelection() {
+		return false
+	} else {
+		h.Cursor.SelectLine()
+		h.Cursor.CopySelection("clipboard")
+		h.freshClip = true
+		if clipboard.Unsupported {
+			InfoBar.Message("Copied line (install xclip for external clipboard)")
+		} else {
+			InfoBar.Message("Copied line")
+		}
+	}
+	h.Cursor.Deselect(true)
 	h.Relocate()
 	return true
 }
@@ -1009,15 +1040,26 @@ func (h *BufPane) MoveLinesUp() bool {
 		}
 		start := h.Cursor.CurSelection[0].Y
 		end := h.Cursor.CurSelection[1].Y
+		sel := 1
 		if start > end {
 			end, start = start, end
+			sel = 0
+		}
+
+		compensate := false
+		if h.Cursor.CurSelection[sel].X != 0 {
+			end++
+		} else {
+			compensate = true
 		}
 
 		h.Buf.MoveLinesUp(
 			start,
 			end,
 		)
-		h.Cursor.CurSelection[1].Y -= 1
+		if compensate {
+			h.Cursor.CurSelection[sel].Y -= 1
+		}
 	} else {
 		if h.Cursor.Loc.Y == 0 {
 			InfoBar.Message("Cannot move further up")
@@ -1042,8 +1084,14 @@ func (h *BufPane) MoveLinesDown() bool {
 		}
 		start := h.Cursor.CurSelection[0].Y
 		end := h.Cursor.CurSelection[1].Y
+		sel := 1
 		if start > end {
 			end, start = start, end
+			sel = 0
+		}
+
+		if h.Cursor.CurSelection[sel].X != 0 {
+			end++
 		}
 
 		h.Buf.MoveLinesDown(
@@ -1447,8 +1495,9 @@ func (h *BufPane) AddTab() bool {
 
 // PreviousTab switches to the previous tab in the tab list
 func (h *BufPane) PreviousTab() bool {
-	a := Tabs.Active()
-	Tabs.SetActive(util.Clamp(a-1, 0, len(Tabs.List)-1))
+	tabsLen := len(Tabs.List)
+	a := Tabs.Active() + tabsLen
+	Tabs.SetActive((a - 1) % tabsLen)
 
 	return true
 }
@@ -1456,7 +1505,8 @@ func (h *BufPane) PreviousTab() bool {
 // NextTab switches to the next tab in the tab list
 func (h *BufPane) NextTab() bool {
 	a := Tabs.Active()
-	Tabs.SetActive(util.Clamp(a+1, 0, len(Tabs.List)-1))
+	Tabs.SetActive((a + 1) % len(Tabs.List))
+
 	return true
 }
 

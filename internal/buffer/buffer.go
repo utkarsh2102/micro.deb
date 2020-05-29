@@ -15,16 +15,15 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 
 	luar "layeh.com/gopher-luar"
 
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
-	"github.com/zyedidia/micro/internal/config"
-	ulua "github.com/zyedidia/micro/internal/lua"
-	"github.com/zyedidia/micro/internal/screen"
-	"github.com/zyedidia/micro/internal/util"
-	"github.com/zyedidia/micro/pkg/highlight"
+	"github.com/zyedidia/micro/v2/internal/config"
+	ulua "github.com/zyedidia/micro/v2/internal/lua"
+	"github.com/zyedidia/micro/v2/internal/screen"
+	"github.com/zyedidia/micro/v2/internal/util"
+	"github.com/zyedidia/micro/v2/pkg/highlight"
 	"golang.org/x/text/encoding/htmlindex"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
@@ -152,14 +151,14 @@ func (b *SharedBuffer) MarkModified(start, end int) {
 		return
 	}
 
-	start = util.Clamp(start, 0, len(b.lines))
-	end = util.Clamp(end, 0, len(b.lines))
+	start = util.Clamp(start, 0, len(b.lines)-1)
+	end = util.Clamp(end, 0, len(b.lines)-1)
 
 	l := -1
 	for i := start; i <= end; i++ {
 		l = util.Max(b.Highlighter.ReHighlightStates(b, i), l)
 	}
-	b.Highlighter.HighlightMatches(b, start, l+1)
+	b.Highlighter.HighlightMatches(b, start, l)
 }
 
 // DisableReload disables future reloads of this sharedbuffer
@@ -474,7 +473,7 @@ func (b *Buffer) RuneAt(loc Loc) rune {
 	if len(line) > 0 {
 		i := 0
 		for len(line) > 0 {
-			r, size := utf8.DecodeRune(line)
+			r, _, size := util.DecodeCharacter(line)
 			line = line[size:]
 			i++
 
@@ -809,7 +808,7 @@ func (b *Buffer) MoveLinesUp(start int, end int) {
 	if end == len(b.lines) {
 		b.Insert(
 			Loc{
-				utf8.RuneCount(b.lines[end-1].data),
+				util.CharacterCount(b.lines[end-1].data),
 				end - 1,
 			},
 			"\n"+l,

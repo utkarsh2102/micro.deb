@@ -13,12 +13,12 @@ import (
 	"github.com/go-errors/errors"
 	isatty "github.com/mattn/go-isatty"
 	lua "github.com/yuin/gopher-lua"
-	"github.com/zyedidia/micro/internal/action"
-	"github.com/zyedidia/micro/internal/buffer"
-	"github.com/zyedidia/micro/internal/config"
-	"github.com/zyedidia/micro/internal/screen"
-	"github.com/zyedidia/micro/internal/shell"
-	"github.com/zyedidia/micro/internal/util"
+	"github.com/zyedidia/micro/v2/internal/action"
+	"github.com/zyedidia/micro/v2/internal/buffer"
+	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/screen"
+	"github.com/zyedidia/micro/v2/internal/shell"
+	"github.com/zyedidia/micro/v2/internal/util"
 	"github.com/zyedidia/tcell"
 )
 
@@ -363,6 +363,9 @@ func DoEvent() {
 	case <-shell.CloseTerms:
 	case event = <-events:
 	case <-screen.DrawChan():
+		for len(screen.DrawChan()) > 0 {
+			<-screen.DrawChan()
+		}
 	}
 
 	if action.InfoBar.HasPrompt {

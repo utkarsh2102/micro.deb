@@ -2,13 +2,12 @@ package display
 
 import (
 	"strconv"
-	"unicode/utf8"
 
 	runewidth "github.com/mattn/go-runewidth"
-	"github.com/zyedidia/micro/internal/buffer"
-	"github.com/zyedidia/micro/internal/config"
-	"github.com/zyedidia/micro/internal/screen"
-	"github.com/zyedidia/micro/internal/util"
+	"github.com/zyedidia/micro/v2/internal/buffer"
+	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/screen"
+	"github.com/zyedidia/micro/v2/internal/util"
 	"github.com/zyedidia/tcell"
 )
 
@@ -73,9 +72,9 @@ func (w *BufWindow) getStartInfo(n, lineN int) ([]byte, int, int, *tcell.Style) 
 	curStyle := config.DefStyle
 	var s *tcell.Style
 	for len(b) > 0 {
-		r, size := utf8.DecodeRune(b)
+		r, _, size := util.DecodeCharacter(b)
 
-		curStyle, found := w.getStyle(curStyle, bloc, r)
+		curStyle, found := w.getStyle(curStyle, bloc)
 		if found {
 			s = &curStyle
 		}
@@ -139,9 +138,6 @@ func (w *BufWindow) Relocate() bool {
 	ret := false
 	activeC := w.Buf.GetActiveCursor()
 	cy := activeC.Y
-	if activeC.HasSelection() {
-		cy = activeC.CurSelection[0].Y
-	}
 	scrollmargin := int(b.Settings["scrollmargin"].(float64))
 	if cy < w.StartLine+scrollmargin && cy > scrollmargin-1 {
 		w.StartLine = cy - scrollmargin
@@ -240,7 +236,7 @@ func (w *BufWindow) LocFromVisual(svloc buffer.Loc) buffer.Loc {
 				return bloc
 			}
 
-			r, size := utf8.DecodeRune(line)
+			r, _, size := util.DecodeCharacter(line)
 			draw()
 			width := 0
 
@@ -363,7 +359,7 @@ func (w *BufWindow) drawLineNum(lineNumStyle tcell.Style, softwrapped bool, maxL
 
 // getStyle returns the highlight style for the given character position
 // If there is no change to the current highlight style it just returns that
-func (w *BufWindow) getStyle(style tcell.Style, bloc buffer.Loc, r rune) (tcell.Style, bool) {
+func (w *BufWindow) getStyle(style tcell.Style, bloc buffer.Loc) (tcell.Style, bool) {
 	if group, ok := w.Buf.Match(bloc.Y)[bloc.X]; ok {
 		s := config.GetColor(group.String())
 		return s, true
@@ -513,7 +509,7 @@ func (w *BufWindow) displayBuffer() {
 		}
 		bloc.X = bslice
 
-		draw := func(r rune, style tcell.Style, showcursor bool) {
+		draw := func(r rune, combc []rune, style tcell.Style, showcursor bool) {
 			if nColsBeforeStart <= 0 {
 				for _, c := range cursors {
 					if c.HasSelection() &&
@@ -571,7 +567,7 @@ func (w *BufWindow) displayBuffer() {
 					}
 				}
 
-				screen.SetContent(w.X+vloc.X, w.Y+vloc.Y, r, nil, style)
+				screen.SetContent(w.X+vloc.X, w.Y+vloc.Y, r, combc, style)
 
 				if showcursor {
 					for _, c := range cursors {
@@ -587,10 +583,11 @@ func (w *BufWindow) displayBuffer() {
 
 		totalwidth := w.StartCol - nColsBeforeStart
 		for len(line) > 0 {
-			r, size := utf8.DecodeRune(line)
-			curStyle, _ = w.getStyle(curStyle, bloc, r)
+			r, combc, size := util.DecodeCharacter(line)
 
-			draw(r, curStyle, true)
+			curStyle, _ = w.getStyle(curStyle, bloc)
+
+			draw(r, combc, curStyle, true)
 
 			width := 0
 
@@ -607,7 +604,7 @@ func (w *BufWindow) displayBuffer() {
 			// Draw any extra characters either spaces for tabs or @ for incomplete wide runes
 			if width > 1 {
 				for i := 1; i < width; i++ {
-					draw(char, curStyle, false)
+					draw(char, nil, curStyle, false)
 				}
 			}
 			bloc.X++
@@ -662,7 +659,7 @@ func (w *BufWindow) displayBuffer() {
 		}
 
 		if vloc.X != bufWidth {
-			draw(' ', curStyle, true)
+			draw(' ', nil, curStyle, true)
 		}
 
 		bloc.X = w.StartCol
@@ -685,8 +682,27 @@ func (w *BufWindow) displayStatusLine() {
 		w.sline.Display()
 	} else if w.Y+w.Height != infoY {
 		w.drawStatus = true
+
+		divchars := config.GetGlobalOption("divchars").(string)
+		if util.CharacterCountInString(divchars) != 2 {
+			divchars = "|-"
+		}
+
+		_, _, size := util.DecodeCharacterInString(divchars)
+		divchar, combc, _ := util.DecodeCharacterInString(divchars[size:])
+
+		dividerStyle := config.DefStyle
+		if style, ok := config.Colorscheme["divider"]; ok {
+			dividerStyle = style
+		}
+
+		divreverse := config.GetGlobalOption("divreverse").(bool)
+		if divreverse {
+			dividerStyle = dividerStyle.Reverse(true)
+		}
+
 		for x := w.X; x < w.X+w.Width; x++ {
-			screen.SetContent(x, w.Y+w.Height-1, '-', nil, config.DefStyle.Reverse(true))
+			screen.SetContent(x, w.Y+w.Height-1, divchar, combc, dividerStyle)
 		}
 	} else {
 		w.drawStatus = false
