@@ -339,7 +339,10 @@ func ReloadConfig() {
 	if err != nil {
 		screen.TermMessage(err)
 	}
-	config.InitGlobalSettings()
+	err = config.InitGlobalSettings()
+	if err != nil {
+		screen.TermMessage(err)
+	}
 	InitBindings()
 	InitCommands()
 
@@ -477,6 +480,7 @@ func SetGlobalOptionNative(option string, nativeValue interface{}) error {
 
 	if !local {
 		config.GlobalSettings[option] = nativeValue
+		config.ModifiedSettings[option] = true
 
 		if option == "colorscheme" {
 			// LoadSyntaxFiles()
@@ -701,6 +705,9 @@ func (h *BufPane) GotoCmd(args []string) {
 				InfoBar.Error(err)
 				return
 			}
+			if line < 0 {
+				line = h.Buf.LinesNum() + 1 + line
+			}
 			line = util.Clamp(line-1, 0, h.Buf.LinesNum()-1)
 			col = util.Clamp(col-1, 0, util.CharacterCount(h.Buf.LineBytes(line)))
 			h.Cursor.GotoLoc(buffer.Loc{col, line})
@@ -709,6 +716,9 @@ func (h *BufPane) GotoCmd(args []string) {
 			if err != nil {
 				InfoBar.Error(err)
 				return
+			}
+			if line < 0 {
+				line = h.Buf.LinesNum() + 1 + line
 			}
 			line = util.Clamp(line-1, 0, h.Buf.LinesNum()-1)
 			h.Cursor.GotoLoc(buffer.Loc{0, line})
@@ -795,7 +805,7 @@ func (h *BufPane) ReplaceCmd(args []string) {
 			return l.GreaterEqual(start) && l.LessEqual(end)
 		}
 
-		searchLoc := start
+		searchLoc := h.Cursor.Loc
 		var doReplacement func()
 		doReplacement = func() {
 			locs, found, err := h.Buf.FindNext(search, start, end, searchLoc, true, !noRegex)
@@ -806,6 +816,7 @@ func (h *BufPane) ReplaceCmd(args []string) {
 			if !found || !inRange(locs[0]) || !inRange(locs[1]) {
 				h.Cursor.ResetSelection()
 				h.Buf.RelocateCursors()
+
 				return
 			}
 
@@ -821,7 +832,9 @@ func (h *BufPane) ReplaceCmd(args []string) {
 
 					searchLoc = locs[0]
 					searchLoc.X += nrunes + locs[0].Diff(locs[1], h.Buf)
-					end.Move(nrunes, h.Buf)
+					if end.Y == locs[1].Y {
+						end = end.Move(nrunes, h.Buf)
+					}
 					h.Cursor.Loc = searchLoc
 					nreplaced++
 				} else if !canceled && !yes {

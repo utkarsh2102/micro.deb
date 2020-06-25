@@ -37,12 +37,17 @@ Here are the available options:
    closed cleanly. In the case of a system crash or a micro crash, the contents
    of the buffer can be recovered automatically by opening the file that was
    being edited before the crash, or manually by searching for the backup in
-   the backup directory. Backups are made in the background when a buffer is
-   modified and the latest backup is more than 8 seconds old, or when micro
-   detects a crash. It is highly recommended that you leave this feature
-   enabled.
+   the backup directory. Backups are made in the background for newly modified
+   buffers every 8 seconds, or when micro detects a crash.
 
     default value: `true`
+
+* `backupdir`: the directory micro should place backups in. For the default
+   value of `""` (empty string), the backup directory will be
+   `ConfigDir/backups`, which is `~/.config/micro/backups` by default. The
+   directory specified for backups will be created if it does not exist.
+
+    default value: `""` (empty string)
 
 * `basename`: in the infobar and tabbar, show only the basename of the file
    being edited rather than the full path.
@@ -50,8 +55,8 @@ Here are the available options:
     default value: `false`
 
 * `colorcolumn`: if this is not set to 0, it will display a column at the
-  specified column. This is useful if you want column 80 to be highlighted
-  special for example.
+   specified column. This is useful if you want column 80 to be highlighted
+   special for example.
 
 	default value: `0`
 
@@ -117,12 +122,15 @@ Here are the available options:
 	default value: `false`
 
 * `fileformat`: this determines what kind of line endings micro will use for
-   the file. UNIX line endings are just `\n` (linefeed) whereas dos line
+   the file. Unix line endings are just `\n` (linefeed) whereas dos line
    endings are `\r\n` (carriage return + linefeed). The two possible values for
    this option are `unix` and `dos`. The fileformat will be automatically
    detected (when you open an existing file) and displayed on the statusline,
    but this option is useful if you would like to change the line endings or if
-   you are starting a new file.
+   you are starting a new file. Changing this option while editing a file will
+   change its line endings. Opening a file with this option set will only have
+   an effect if the file is empty/newly created, because otherwise the fileformat
+   will be automatically detected from the existing line endings.
 
 	default value: `unix`
 
@@ -178,12 +186,29 @@ Here are the available options:
 
 	default value: `true`
 
-* `paste`: Treat characters sent from the terminal in a single chunk as a paste
+* `paste`: treat characters sent from the terminal in a single chunk as a paste
    event rather than a series of manual key presses. If you are pasting using
    the terminal keybinding (not Ctrl-v, which is micro's default paste
    keybinding) then it is a good idea to enable this option during the paste
    and disable once the paste is over. See `> help copypaste` for details about
    copying and pasting in a terminal environment.
+
+    default value: `false`
+
+* `parsecursor`: if enabled, this will cause micro to parse filenames such as
+   file.txt:10:5 as requesting to open `file.txt` with the cursor at line 10
+   and column 5. The column number can also be dropped to open the file at a
+   given line and column 0. Note that with this option enabled it is not possible
+   to open a file such as `file.txt:10:5`, where `:10:5` is part of the filename.
+   It is also possible to open a file with a certain cursor location by using the
+   `+LINE,COL` flag syntax. See `micro -help` for the command line options.
+
+    default value: `false`
+
+* `permbackup`: this option causes backups (see `backup` option) to be
+   permanently saved. With permanent backups, micro will not remove backups when
+   files are closed and will never apply them to existing files. Use this option
+   if you are interested in manually managing your backup files.
 
     default value: `false`
 
@@ -213,6 +238,12 @@ Here are the available options:
 * `ruler`: display line numbers.
 
 	default value: `true`
+
+* `relativeruler`: make line numbers display relatively. If set to true, all lines except
+	for the line that the cursor is located will display the distance from the 
+	cursor's line. 
+
+	default value: `false` 
 
 * `savecursor`: remember where the cursor was last time the file was opened and
    put it there when you open the file again. Information is saved to

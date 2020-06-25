@@ -74,9 +74,6 @@ func (c *Cursor) GetVisualX() int {
 
 	bytes := c.buf.LineBytes(c.Y)
 	tabsize := int(c.buf.Settings["tabsize"].(float64))
-	if c.X > util.CharacterCount(bytes) {
-		c.X = util.CharacterCount(bytes) - 1
-	}
 
 	return util.StringWidth(bytes, c.X, tabsize)
 }
@@ -242,6 +239,12 @@ func (c *Cursor) UpN(amount int) {
 
 	if c.X > util.CharacterCount(bytes) || (amount < 0 && proposedY == c.Y) {
 		c.X = util.CharacterCount(bytes)
+		c.StoreVisualX()
+	}
+
+	if c.X < 0 || (amount > 0 && proposedY == c.Y) {
+		c.X = 0
+		c.StoreVisualX()
 	}
 
 	c.Y = proposedY
