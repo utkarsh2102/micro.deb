@@ -5,8 +5,8 @@ Last-Update: 2020-02-21
 
 --- a/go.sum
 +++ b/go.sum
-@@ -48,8 +48,8 @@
- github.com/zyedidia/glob v0.0.0-20170209203856-dd4023a66dc3/go.mod h1:YKbIYP//Eln8eDgAJGI3IDvR3s4Tv9Z9TGIOumiyQ5c=
+@@ -46,8 +46,8 @@
+ github.com/zyedidia/go-shellquote v0.0.0-20200613203517-eccd813c0655/go.mod h1:1sTqqO+kcYzZp43M5VsJe1tns9IzlSeC9jB6c2+o/5Y=
  github.com/zyedidia/highlight v0.0.0-20170330143449-201131ce5cf5 h1:Zs6mpwXvlqpF9zHl5XaN0p5V4J9XvP+WBuiuXyIgqvc=
  github.com/zyedidia/highlight v0.0.0-20170330143449-201131ce5cf5/go.mod h1:c1r+Ob9tUTPB0FKWO1+x+Hsc/zNa45WdGq7Y38Ybip0=
 -github.com/zyedidia/json5 v0.0.0-20200102012142-2da050b1a98d h1:zmDMkh22zXOB7gz8jFaI4GpI7llsPgzm38/jG0UgxjE=
@@ -51,7 +51,7 @@ Last-Update: 2020-02-21
  func TestDependencyResolving(t *testing.T) {
 --- a/internal/config/settings.go
 +++ b/internal/config/settings.go
-@@ -11,7 +11,7 @@
+@@ -12,7 +12,7 @@
  	"strings"
  
  	"github.com/zyedidia/glob"
@@ -69,5 +69,5 @@ Last-Update: 2020-02-21
 -	github.com/zyedidia/json5 v0.0.0-20200102012142-2da050b1a98d
 +	github.com/flynn/json5 v0.0.0-20200102012142-2da050b1a98d
  	github.com/zyedidia/pty v2.0.0+incompatible // indirect
- 	github.com/zyedidia/tcell v1.4.5
+ 	github.com/zyedidia/tcell v1.4.8
  	github.com/zyedidia/terminal v0.0.0-20180726154117-533c623e2415
