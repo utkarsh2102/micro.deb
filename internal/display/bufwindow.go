@@ -335,7 +335,14 @@ func (w *BufWindow) drawDiffGutter(backgroundStyle tcell.Style, softwrapped bool
 }
 
 func (w *BufWindow) drawLineNum(lineNumStyle tcell.Style, softwrapped bool, maxLineNumLength int, vloc *buffer.Loc, bloc *buffer.Loc) {
-	lineNum := strconv.Itoa(bloc.Y + 1)
+	cursorLine := w.Buf.GetActiveCursor().Loc.Y
+	var lineInt int
+	if w.Buf.Settings["relativeruler"] == false || cursorLine == bloc.Y {
+		lineInt = bloc.Y + 1
+	} else {
+		lineInt = bloc.Y - cursorLine
+	}
+	lineNum := strconv.Itoa(util.Abs(lineInt))
 
 	// Write the spaces before the line number if necessary
 	for i := 0; i < maxLineNumLength-len(lineNum); i++ {
@@ -511,6 +518,13 @@ func (w *BufWindow) displayBuffer() {
 
 		draw := func(r rune, combc []rune, style tcell.Style, showcursor bool) {
 			if nColsBeforeStart <= 0 {
+				_, origBg, _ := style.Decompose()
+				_, defBg, _ := config.DefStyle.Decompose()
+
+				// syntax highlighting with non-default background takes precedence
+				// over cursor-line and color-column
+				dontOverrideBackground := origBg != defBg
+
 				for _, c := range cursors {
 					if c.HasSelection() &&
 						(bloc.GreaterEqual(c.CurSelection[0]) && bloc.LessThan(c.CurSelection[1]) ||
@@ -523,7 +537,7 @@ func (w *BufWindow) displayBuffer() {
 						}
 					}
 
-					if b.Settings["cursorline"].(bool) && w.active &&
+					if b.Settings["cursorline"].(bool) && w.active && !dontOverrideBackground &&
 						!c.HasSelection() && c.Y == bloc.Y {
 						if s, ok := config.Colorscheme["cursor-line"]; ok {
 							fg, _, _ := s.Decompose()
@@ -555,7 +569,7 @@ func (w *BufWindow) displayBuffer() {
 				}
 
 				if s, ok := config.Colorscheme["color-column"]; ok {
-					if colorcolumn != 0 && vloc.X-w.gutterOffset+w.StartCol == colorcolumn {
+					if colorcolumn != 0 && vloc.X-w.gutterOffset+w.StartCol == colorcolumn && !dontOverrideBackground {
 						fg, _, _ := s.Decompose()
 						style = style.Background(fg)
 					}
@@ -659,7 +673,8 @@ func (w *BufWindow) displayBuffer() {
 		}
 
 		if vloc.X != bufWidth {
-			draw(' ', nil, curStyle, true)
+			// Display newline within a selection
+			draw(' ', nil, config.DefStyle, true)
 		}
 
 		bloc.X = w.StartCol

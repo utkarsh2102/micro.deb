@@ -124,6 +124,8 @@ func BufMapKey(k Event, action string) {
 					break
 				}
 			}
+			// if the action changed the current pane, update the reference
+			h = MainTab().CurPane()
 		}
 		return true
 	}
@@ -330,7 +332,7 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 		switch e.Buttons() {
 		case tcell.Button1:
 			_, my := e.Position()
-			if h.Buf.Settings["statusline"].(bool) && my >= h.GetView().Y+h.GetView().Height-1 {
+			if h.Buf.Type.Kind != buffer.BTInfo.Kind && h.Buf.Settings["statusline"].(bool) && my >= h.GetView().Y+h.GetView().Height-1 {
 				cancel = true
 			}
 		case tcell.ButtonNone:

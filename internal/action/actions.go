@@ -663,7 +663,12 @@ func (h *BufPane) Autocomplete() bool {
 		return false
 	}
 
-	if !util.IsNonAlphaNumeric(h.Cursor.RuneUnder(h.Cursor.X)) {
+	if h.Cursor.X == 0 {
+		return false
+	}
+	r := h.Cursor.RuneUnder(h.Cursor.X)
+	prev := h.Cursor.RuneUnder(h.Cursor.X - 1)
+	if !util.IsAutocomplete(prev) || !util.IsNonAlphaNumeric(r) {
 		// don't autocomplete if cursor is on alpha numeric character (middle of a word)
 		return false
 	}
@@ -727,6 +732,7 @@ func (h *BufPane) Save() bool {
 }
 
 // SaveAsCB performs a save as and does a callback at the very end (after all prompts have been resolved)
+// The callback is only called if the save was successful
 func (h *BufPane) SaveAsCB(action string, callback func()) bool {
 	InfoBar.Prompt("Filename: ", "", "Save", nil, func(resp string, canceled bool) {
 		if !canceled {
@@ -757,6 +763,7 @@ func (h *BufPane) SaveAs() bool {
 
 // This function saves the buffer to `filename` and changes the buffer's path and name
 // to `filename` if the save is successful
+// The callback is only called if the save was successful
 func (h *BufPane) saveBufToFile(filename string, action string, callback func()) bool {
 	err := h.Buf.SaveAs(filename)
 	if err != nil {
@@ -769,6 +776,9 @@ func (h *BufPane) saveBufToFile(filename string, action string, callback func())
 					h.Buf.Path = filename
 					h.Buf.SetName(filename)
 					InfoBar.Message("Saved " + filename)
+					if callback != nil {
+						callback()
+					}
 				}
 			}
 			if h.Buf.Settings["autosu"].(bool) {
@@ -778,9 +788,6 @@ func (h *BufPane) saveBufToFile(filename string, action string, callback func())
 					if yes && !canceled {
 						saveWithSudo()
 						h.completeAction(action)
-					}
-					if callback != nil {
-						callback()
 					}
 				})
 				return false
@@ -792,9 +799,9 @@ func (h *BufPane) saveBufToFile(filename string, action string, callback func())
 		h.Buf.Path = filename
 		h.Buf.SetName(filename)
 		InfoBar.Message("Saved " + filename)
-	}
-	if callback != nil {
-		callback()
+		if callback != nil {
+			callback()
+		}
 	}
 	return true
 }
@@ -807,6 +814,30 @@ func (h *BufPane) Find() bool {
 // FindLiteral is the same as Find() but does not support regular expressions
 func (h *BufPane) FindLiteral() bool {
 	return h.find(false)
+}
+
+// Search searches for a given string/regex in the buffer and selects the next
+// match if a match is found
+// This function affects lastSearch and lastSearchRegex (saved searches) for
+// use with FindNext and FindPrevious
+func (h *BufPane) Search(str string, useRegex bool, searchDown bool) error {
+	match, found, err := h.Buf.FindNext(str, h.Buf.Start(), h.Buf.End(), h.Cursor.Loc, searchDown, useRegex)
+	if err != nil {
+		return err
+	}
+	if found {
+		h.Cursor.SetSelectionStart(match[0])
+		h.Cursor.SetSelectionEnd(match[1])
+		h.Cursor.OrigSelection[0] = h.Cursor.CurSelection[0]
+		h.Cursor.OrigSelection[1] = h.Cursor.CurSelection[1]
+		h.Cursor.GotoLoc(h.Cursor.CurSelection[1])
+		h.lastSearch = str
+		h.lastSearchRegex = useRegex
+		h.Relocate()
+	} else {
+		h.Cursor.ResetSelection()
+	}
+	return nil
 }
 
 func (h *BufPane) find(useRegex bool) bool {
