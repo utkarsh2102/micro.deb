@@ -1,2 +1,3 @@
 01-disable-commit-hash-and-date.patch
 use-original-fork.patch
+remove-FtoaWithDigits-call.patch

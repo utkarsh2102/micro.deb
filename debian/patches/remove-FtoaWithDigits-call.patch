@@ -1,0 +1,16 @@
+Description: Remove FtoaWithDigits.
+Author: Utkarsh Gupta <utkarsh@debian.org>
+Forwarded: https://github.com/zyedidia/micro/issues/1749
+Last-Update: 2020-06-29
+
+--- a/internal/lua/lua.go
++++ b/internal/lua/lua.go
+@@ -566,7 +566,7 @@
+ 	L.SetField(pkg, "Bytes", luar.New(L, humanize.Bytes))
+ 	L.SetField(pkg, "Ordinal", luar.New(L, humanize.Ordinal))
+ 	L.SetField(pkg, "Ftoa", luar.New(L, humanize.Ftoa))
+-	L.SetField(pkg, "FtoaWithDigits", luar.New(L, humanize.FtoaWithDigits))
++	//L.SetField(pkg, "FtoaWithDigits", luar.New(L, humanize.FtoaWithDigits))
+ 
+ 	return pkg
+ }
