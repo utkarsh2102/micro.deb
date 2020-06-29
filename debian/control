@@ -5,7 +5,7 @@ Uploaders: Raju Devidas <rajudev@disroot.org>,
 Section: editors
 Testsuite: autopkgtest-pkg-go
 Priority: optional
-Build-Depends: debhelper-compat (= 11),
+Build-Depends: debhelper-compat (= 13),
                dh-golang,
                golang-any,
                golang-github-blang-semver-dev,
@@ -19,7 +19,7 @@ Build-Depends: debhelper-compat (= 11),
                golang-github-yuin-gopher-lua-dev,
                golang-github-zyedidia-clipboard-dev,
                golang-github-zyedidia-glob-dev,
-               golang-github-zyedidia-tcell-dev (>= 1.4.4),
+               golang-github-zyedidia-tcell-dev (>= 1.4.8),
                golang-layeh-gopher-luar-dev,
                golang-yaml.v2-dev,
                golang-github-zyedidia-terminal-dev,

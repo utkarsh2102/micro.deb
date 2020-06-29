@@ -7,7 +7,7 @@ Last-Update: 2020-02-12
 
 --- a/cmd/micro/micro.go
 +++ b/cmd/micro/micro.go
-@@ -86,8 +86,8 @@
+@@ -87,8 +87,8 @@
  	if *flagVersion {
  		// If -version was passed
  		fmt.Println("Version:", util.Version)

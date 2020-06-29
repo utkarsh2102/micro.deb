@@ -1,2 +1,2 @@
 version=4
-https://github.com/zyedidia/micro/releases .*/v?(\d\S*)\.tar\.gz
+https://github.com/zyedidia/micro/releases .*/v(\d\.\d\.\d).tar.gz
