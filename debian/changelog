@@ -1,3 +1,10 @@
+micro (2.0.6-1~bpo10+1) UNRELEASED; urgency=medium
+
+  * Rebuild for buster-backports.
+  * Lower dh-compat to 12 temporarily
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Mon, 29 Jun 2020 18:46:43 +0530
+
 micro (2.0.6-1) unstable; urgency=medium
 
   * New upstream version 2.0.6
