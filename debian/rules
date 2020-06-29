@@ -21,7 +21,9 @@ export DH_GOLANG_BUILDPKG := github.com/zyedidia/micro/cmd/micro
 
 override_dh_auto_build:
 	dh_auto_build -- -buildmode=pie \
-	-ldflags="-extldflags -Wl,-z,now -s -w -X 'github.com/zyedidia/micro/internal/util.Version=$(VERSION)' -X 'github.com/zyedidia/micro/internal/util.CommitHash=$(HASH)' -X 'github.com/zyedidia/micro/internal/util.CompileDate=$(DATE)' $(ADDITIONAL_GO_LINKER_FLAGS)"
+	-ldflags="-extldflags -Wl,-z,now -s -w -X 'github.com/zyedidia/micro/internal/util.Version=$(VERSION)' $(ADDITIONAL_GO_LINKER_FLAGS)"
+# Adding CompileDate is bad reproducibility and
+# adding CommitHash is redundant as we don't use that to build a package.
 
 override_dh_auto_install:
 	dh_auto_install -- --no-source
