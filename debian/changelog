@@ -2,6 +2,8 @@ micro (2.0.6-1~bpo10+1) UNRELEASED; urgency=medium
 
   * Rebuild for buster-backports.
   * Lower dh-compat to 12 temporarily
+  * Add patch to remove FtoaWithDigits call
+  * Tighten dependency on golang-any
 
  -- Utkarsh Gupta <utkarsh@debian.org>  Mon, 29 Jun 2020 18:46:43 +0530
 
