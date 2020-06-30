@@ -1,7 +1,7 @@
-micro (2.0.6-1~bpo10+1) UNRELEASED; urgency=medium
+micro (2.0.6-1~bpo10+1) buster-backports; urgency=medium
 
   * Rebuild for buster-backports.
-  * Lower dh-compat to 12 temporarily
+  * Lower dh-compat to 11
   * Add patch to remove FtoaWithDigits call
   * Tighten dependency on golang-any
 
