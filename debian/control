@@ -5,7 +5,7 @@ Uploaders: Raju Devidas <rajudev@disroot.org>,
 Section: editors
 Testsuite: autopkgtest-pkg-go
 Priority: optional
-Build-Depends: debhelper-compat (= 12),
+Build-Depends: debhelper-compat (= 11),
                dh-golang,
                golang-any (>= 2:1.14~1~bpo10+1),
                golang-github-blang-semver-dev,
