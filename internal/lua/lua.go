@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -24,6 +25,7 @@ import (
 )
 
 var L *lua.LState
+var Lock sync.Mutex
 
 // LoadFile loads a lua file
 func LoadFile(module string, file string, data []byte) error {
@@ -565,8 +567,6 @@ func importHumanize() *lua.LTable {
 
 	L.SetField(pkg, "Bytes", luar.New(L, humanize.Bytes))
 	L.SetField(pkg, "Ordinal", luar.New(L, humanize.Ordinal))
-	L.SetField(pkg, "Ftoa", luar.New(L, humanize.Ftoa))
-	L.SetField(pkg, "FtoaWithDigits", luar.New(L, humanize.FtoaWithDigits))
 
 	return pkg
 }

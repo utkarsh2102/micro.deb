@@ -43,6 +43,12 @@ are called when certain events happen. Here is the list of callbacks
 which micro defines:
 
 * `init()`: this function should be used for your plugin initialization.
+   This function is called after buffers have been initialized.
+
+* `preinit()`: initialization function called before buffers have been
+   initialized.
+
+* `postinit()`: initialization function called after `init()`.
 
 * `onBufferOpen(buf)`: runs when a buffer is opened. The input contains
    the buffer object.
@@ -364,8 +370,6 @@ The following functions are also available from the go-humanize package:
 The `humanize` package exposes:
 * `Bytes`
 * `Ordinal`
-* `Ftoa`
-* `FtoaWithDigits`
 
 ## Adding help files, syntax files, or colorschemes in your plugin
 

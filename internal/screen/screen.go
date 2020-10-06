@@ -4,11 +4,10 @@ import (
 	"errors"
 	"os"
 	"sync"
-	"unicode"
 
 	"github.com/zyedidia/micro/v2/internal/config"
 	"github.com/zyedidia/micro/v2/internal/util"
-	"github.com/zyedidia/tcell"
+	"github.com/zyedidia/tcell/v2"
 )
 
 // Screen is the tcell screen we use to draw to the terminal
@@ -18,6 +17,9 @@ import (
 // screen. TODO: maybe we should worry about polling and drawing at the
 // same time too.
 var Screen tcell.Screen
+
+// Events is the channel of tcell events
+var Events chan (tcell.Event)
 
 // The lock is necessary since the screen is polled on a separate thread
 var lock sync.Mutex
@@ -98,7 +100,7 @@ func ShowCursor(x, y int) {
 // SetContent sets a cell at a point on the screen and makes sure that it is
 // synced with the last cursor location
 func SetContent(x, y int, mainc rune, combc []rune, style tcell.Style) {
-	if !unicode.IsPrint(mainc) {
+	if !Screen.CanDisplay(mainc, true) {
 		mainc = '�'
 	}
 
@@ -156,6 +158,8 @@ func Init() error {
 	if err = Screen.Init(); err != nil {
 		return err
 	}
+
+	Screen.SetPaste(config.GetGlobalOption("paste").(bool))
 
 	// restore TERM
 	if config.GetGlobalOption("xterm").(bool) {

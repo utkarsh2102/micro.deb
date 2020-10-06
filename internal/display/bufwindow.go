@@ -8,7 +8,7 @@ import (
 	"github.com/zyedidia/micro/v2/internal/config"
 	"github.com/zyedidia/micro/v2/internal/screen"
 	"github.com/zyedidia/micro/v2/internal/util"
-	"github.com/zyedidia/tcell"
+	"github.com/zyedidia/tcell/v2"
 )
 
 // The BufWindow provides a way of displaying a certain section
@@ -736,8 +736,14 @@ func (w *BufWindow) displayScrollBar() {
 			barsize = 1
 		}
 		barstart := w.Y + int(float64(w.StartLine)/float64(w.Buf.LinesNum())*float64(w.Height))
+
+		scrollBarStyle := config.DefStyle.Reverse(true)
+		if style, ok := config.Colorscheme["scrollbar"]; ok {
+			scrollBarStyle = style
+		}
+
 		for y := barstart; y < util.Min(barstart+barsize, w.Y+bufHeight); y++ {
-			screen.SetContent(scrollX, y, '|', nil, config.DefStyle.Reverse(true))
+			screen.SetContent(scrollX, y, '|', nil, scrollBarStyle)
 		}
 	}
 }
