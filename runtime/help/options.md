@@ -54,6 +54,25 @@ Here are the available options:
 
     default value: `false`
 
+* `clipboard`: specifies how micro should access the system clipboard.
+   Possible values are:
+    * `external`: accesses clipboard via an external tool, such as xclip/xsel
+       or wl-clipboard on Linux, pbcopy/pbpaste on MacOS, and system calls on
+       Windows. On Linux, if you do not have one of the tools installed, or if
+       they are not working, micro will throw an error and use an internal
+       clipboard.
+    * `terminal`: accesses the clipboard via your terminal emulator. Note that
+       there is limited support among terminal emulators for this feature
+       (called OSC 52). Terminals that are known to work are Kitty (enable
+       reading with `clipboard_control` setting), iTerm2 (only copying),
+       st, rxvt-unicode and xterm if enabled (see `> help copypaste` for
+       details). Note that Gnome-terminal does not support this feature. With
+       this setting, copy-paste **will** work over ssh. See `> help copypaste`
+       for details.
+    * `internal`: micro will use an internal clipboard.
+
+    default value: `external`
+
 * `colorcolumn`: if this is not set to 0, it will display a column at the
    specified column. This is useful if you want column 80 to be highlighted
    special for example.
@@ -374,6 +393,84 @@ Any option you set in the editor will be saved to the file
 ~/.config/micro/settings.json so, in effect, your configuration file will be 
 created for you. If you'd like to take your configuration with you to another
 machine, simply copy the settings.json to the other machine.
+
+## Settings.json file
+
+The settings.json file should go in your configuration directory (by default
+at `~/.config/micro`), and should contain only options which have been modified
+from their default setting. Here is the full list of options in json format,
+so that you can see what the formatting should look like.
+
+```json
+{
+    "autoclose": true,
+    "autoindent": true,
+    "autosave": 0,
+    "autosu": false,
+    "backup": true,
+    "backupdir": "",
+    "basename": false,
+    "clipboard": "external",
+    "colorcolumn": 0,
+    "colorscheme": "default",
+    "comment": true,
+    "cursorline": true,
+    "diff": true,
+    "diffgutter": false,
+    "divchars": "|-",
+    "divreverse": true,
+    "encoding": "utf-8",
+    "eofnewline": true,
+    "fastdirty": false,
+    "fileformat": "unix",
+    "filetype": "unknown",
+    "ftoptions": true,
+    "ignorecase": false,
+    "indentchar": " ",
+    "infobar": true,
+    "initlua": true,
+    "keepautoindent": false,
+    "keymenu": false,
+    "linter": true,
+    "literate": true,
+    "matchbrace": true,
+    "mkparents": false,
+    "mouse": true,
+    "parsecursor": false,
+    "paste": false,
+    "permbackup": false,
+    "pluginchannels": [
+        "https://raw.githubusercontent.com/micro-editor/plugin-channel/master/channel.json"
+    ],
+    "pluginrepos": [],
+    "readonly": false,
+    "relativeruler": false,
+    "rmtrailingws": false,
+    "ruler": true,
+    "savecursor": false,
+    "savehistory": true,
+    "saveundo": false,
+    "scrollbar": false,
+    "scrollmargin": 3,
+    "scrollspeed": 2,
+    "smartpaste": true,
+    "softwrap": false,
+    "splitbottom": true,
+    "splitright": true,
+    "status": true,
+    "statusformatl": "$(filename) $(modified)($(line),$(col)) $(status.paste)| ft:$(opt:filetype) | $(opt:fileformat) | $(opt:encoding)",
+    "statusformatr": "$(bind:ToggleKeyMenu): bindings, $(bind:ToggleHelp): help",
+    "statusline": true,
+    "sucmd": "sudo",
+    "syntax": true,
+    "tabmovement": false,
+    "tabsize": 4,
+    "tabstospaces": false,
+    "test": true,
+    "useprimary": true,
+    "xterm": false
+}
+```
 
 ## Global and local settings
 

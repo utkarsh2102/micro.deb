@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/signal"
 	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/go-errors/errors"
@@ -16,16 +18,17 @@ import (
 	lua "github.com/yuin/gopher-lua"
 	"github.com/zyedidia/micro/v2/internal/action"
 	"github.com/zyedidia/micro/v2/internal/buffer"
+	"github.com/zyedidia/micro/v2/internal/clipboard"
 	"github.com/zyedidia/micro/v2/internal/config"
+	ulua "github.com/zyedidia/micro/v2/internal/lua"
 	"github.com/zyedidia/micro/v2/internal/screen"
 	"github.com/zyedidia/micro/v2/internal/shell"
 	"github.com/zyedidia/micro/v2/internal/util"
-	"github.com/zyedidia/tcell"
+	"github.com/zyedidia/tcell/v2"
 )
 
 var (
 	// Event channel
-	events   chan tcell.Event
 	autosave chan bool
 
 	// Command line flags
@@ -268,16 +271,41 @@ func main() {
 		os.Exit(1)
 	}
 
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Kill, syscall.SIGTERM)
+
+	go func() {
+		<-c
+
+		for _, b := range buffer.OpenBuffers {
+			if !b.Modified() {
+				b.Fini()
+			}
+		}
+
+		if screen.Screen != nil {
+			screen.Screen.Fini()
+		}
+		os.Exit(0)
+	}()
+
+	m := clipboard.SetMethod(config.GetGlobalOption("clipboard").(string))
+	clipErr := clipboard.Initialize(m)
+
 	defer func() {
 		if err := recover(); err != nil {
-			screen.Screen.Fini()
-			fmt.Println("Micro encountered an error:", err)
+			if screen.Screen != nil {
+				screen.Screen.Fini()
+			}
+			if e, ok := err.(*lua.ApiError); ok {
+				fmt.Println("Lua API error:", e)
+			} else {
+				fmt.Println("Micro encountered an error:", errors.Wrap(err, 2).ErrorStack(), "\nIf you can reproduce this error, please report it at https://github.com/zyedidia/micro/issues")
+			}
 			// backup all open buffers
 			for _, b := range buffer.OpenBuffers {
 				b.Backup()
 			}
-			// Print the stack trace too
-			fmt.Print(errors.Wrap(err, 2).ErrorStack())
 			os.Exit(1)
 		}
 	}()
@@ -291,6 +319,11 @@ func main() {
 	action.InitCommands()
 
 	err = config.InitColorscheme()
+	if err != nil {
+		screen.TermMessage(err)
+	}
+
+	err = config.RunPluginFn("preinit")
 	if err != nil {
 		screen.TermMessage(err)
 	}
@@ -312,7 +345,16 @@ func main() {
 		screen.TermMessage(err)
 	}
 
-	events = make(chan tcell.Event)
+	err = config.RunPluginFn("postinit")
+	if err != nil {
+		screen.TermMessage(err)
+	}
+
+	if clipErr != nil {
+		action.InfoBar.Error(clipErr, " or change 'clipboard' option")
+	}
+
+	screen.Events = make(chan tcell.Event)
 
 	// Here is the event loop which runs in a separate thread
 	go func() {
@@ -321,7 +363,7 @@ func main() {
 			e := screen.Screen.PollEvent()
 			screen.Unlock()
 			if e != nil {
-				events <- e
+				screen.Events <- e
 			}
 		}
 	}()
@@ -334,15 +376,12 @@ func main() {
 
 	// wait for initial resize event
 	select {
-	case event := <-events:
+	case event := <-screen.Events:
 		action.Tabs.HandleEvent(event)
 	case <-time.After(10 * time.Millisecond):
 		// time out after 10ms
 	}
 
-	// Since this loop is very slow (waits for user input every time) it's
-	// okay to be inefficient and run it via a function every time
-	// We do this so we can recover from panics without crashing the editor
 	for {
 		DoEvent()
 	}
@@ -352,16 +391,6 @@ func main() {
 func DoEvent() {
 	var event tcell.Event
 
-	// recover from errors without crashing the editor
-	defer func() {
-		if err := recover(); err != nil {
-			if e, ok := err.(*lua.ApiError); ok {
-				screen.TermMessage("Lua API error:", e)
-			} else {
-				screen.TermMessage("Micro encountered an error:", errors.Wrap(err, 2).ErrorStack(), "\nIf you can reproduce this error, please report it at https://github.com/zyedidia/micro/issues")
-			}
-		}
-	}()
 	// Display everything
 	screen.Screen.Fill(' ', config.DefStyle)
 	screen.Screen.HideCursor()
@@ -377,22 +406,30 @@ func DoEvent() {
 	select {
 	case f := <-shell.Jobs:
 		// If a new job has finished while running in the background we should execute the callback
+		ulua.Lock.Lock()
 		f.Function(f.Output, f.Args)
+		ulua.Lock.Unlock()
 	case <-config.Autosave:
+		ulua.Lock.Lock()
 		for _, b := range buffer.OpenBuffers {
 			b.Save()
 		}
+		ulua.Lock.Unlock()
 	case <-shell.CloseTerms:
-	case event = <-events:
+	case event = <-screen.Events:
 	case <-screen.DrawChan():
 		for len(screen.DrawChan()) > 0 {
 			<-screen.DrawChan()
 		}
 	}
 
+	ulua.Lock.Lock()
+	// if event != nil {
 	if action.InfoBar.HasPrompt {
 		action.InfoBar.HandleEvent(event)
 	} else {
 		action.Tabs.HandleEvent(event)
 	}
+	// }
+	ulua.Lock.Unlock()
 }
