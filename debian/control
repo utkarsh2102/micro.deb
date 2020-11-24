@@ -1,7 +1,5 @@
 Source: micro
-Maintainer: Debian Go Packaging Team <team+pkg-go@tracker.debian.org>
-Uploaders: Raju Devidas <rajudev@disroot.org>,
-           Utkarsh Gupta <utkarsh@debian.org>
+Maintainer: Utkarsh Gupta <utkarsh@debian.org>
 Section: editors
 Testsuite: autopkgtest-pkg-go
 Priority: optional
