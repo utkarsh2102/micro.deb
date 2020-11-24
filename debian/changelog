@@ -1,3 +1,20 @@
+micro (2.0.8-1) unstable; urgency=medium
+
+  [ Utkarsh Gupta ]
+  * New upstream version 2.0.8
+  * Remove CompileDate and CommitHash as they're redundant
+  * Refresh d/patches
+  * Add new dependency on golang-github-xo-terminfo-dev
+  * Tighten dependency on golang-github-zyedidia-tcell-dev
+  * Tighten dependency on golang-github-zyedidia-clipboard
+  * Replace myself as the maintainer
+
+  [ Nilesh Patra ]
+  * Add dependency on golang-github-stretchr-testify-dev
+    (Closes: #975194)
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Tue, 24 Nov 2020 23:51:02 +0530
+
 micro (2.0.6-2) unstable; urgency=medium
 
   * Revert "Include v2 in the path"
