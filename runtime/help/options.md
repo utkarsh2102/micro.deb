@@ -237,8 +237,7 @@ Here are the available options:
    By default, this option points to the official plugin channel hosted on GitHub
    at https://github.com/micro-editor/plugin-channel.
 
-    default value: `https://raw.githubusercontent.com/micro-editor/plugin-channel
-                    /master/channel.json`
+    default value: `https://raw.githubusercontent.com/micro-editor/plugin-channel/master/channel.json`
 
 * `pluginrepos`: a list of links to plugin repositories.
 
@@ -466,7 +465,6 @@ so that you can see what the formatting should look like.
     "tabmovement": false,
     "tabsize": 4,
     "tabstospaces": false,
-    "test": true,
     "useprimary": true,
     "xterm": false
 }
