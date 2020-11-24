@@ -69,5 +69,5 @@ Last-Update: 2020-02-21
 -	github.com/zyedidia/json5 v0.0.0-20200102012142-2da050b1a98d
 +	github.com/flynn/json5 v0.0.0-20200102012142-2da050b1a98d
  	github.com/zyedidia/pty v2.0.0+incompatible // indirect
- 	github.com/zyedidia/tcell/v2 v2.0.2
+ 	github.com/zyedidia/tcell/v2 v2.0.6
  	github.com/zyedidia/terminal v0.0.0-20180726154117-533c623e2415
