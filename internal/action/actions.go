@@ -10,6 +10,7 @@ import (
 	"github.com/zyedidia/micro/v2/internal/buffer"
 	"github.com/zyedidia/micro/v2/internal/clipboard"
 	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/display"
 	"github.com/zyedidia/micro/v2/internal/screen"
 	"github.com/zyedidia/micro/v2/internal/shell"
 	"github.com/zyedidia/micro/v2/internal/util"
@@ -19,21 +20,26 @@ import (
 // ScrollUp is not an action
 func (h *BufPane) ScrollUp(n int) {
 	v := h.GetView()
-	if v.StartLine >= n {
-		v.StartLine -= n
-		h.SetView(v)
-	} else {
-		v.StartLine = 0
-	}
+	v.StartLine = h.Scroll(v.StartLine, -n)
+	h.SetView(v)
 }
 
 // ScrollDown is not an action
 func (h *BufPane) ScrollDown(n int) {
 	v := h.GetView()
-	if v.StartLine <= h.Buf.LinesNum()-1-n {
-		v.StartLine += n
-		h.SetView(v)
+	v.StartLine = h.Scroll(v.StartLine, n)
+	h.SetView(v)
+}
+
+// If the user has scrolled past the last line, ScrollAdjust can be used
+// to shift the view so that the last line is at the bottom
+func (h *BufPane) ScrollAdjust() {
+	v := h.GetView()
+	end := h.SLocFromLoc(h.Buf.End())
+	if h.Diff(v.StartLine, end) < h.BufView().Height-1 {
+		v.StartLine = h.Scroll(end, -h.BufView().Height+1)
 	}
+	h.SetView(v)
 }
 
 // MousePress is the event that should happen when a normal click happens
@@ -111,22 +117,55 @@ func (h *BufPane) ScrollDownAction() bool {
 // Center centers the view on the cursor
 func (h *BufPane) Center() bool {
 	v := h.GetView()
-	v.StartLine = h.Cursor.Y - v.Height/2
-	if v.StartLine+v.Height > h.Buf.LinesNum() {
-		v.StartLine = h.Buf.LinesNum() - v.Height
-	}
-	if v.StartLine < 0 {
-		v.StartLine = 0
-	}
+	v.StartLine = h.Scroll(h.SLocFromLoc(h.Cursor.Loc), -h.BufView().Height/2)
 	h.SetView(v)
-	h.Relocate()
+	h.ScrollAdjust()
 	return true
+}
+
+// MoveCursorUp is not an action
+func (h *BufPane) MoveCursorUp(n int) {
+	if !h.Buf.Settings["softwrap"].(bool) {
+		h.Cursor.UpN(n)
+	} else {
+		vloc := h.VLocFromLoc(h.Cursor.Loc)
+		sloc := h.Scroll(vloc.SLoc, -n)
+		if sloc == vloc.SLoc {
+			// we are at the beginning of buffer
+			h.Cursor.Loc = h.Buf.Start()
+			h.Cursor.LastVisualX = 0
+		} else {
+			vloc.SLoc = sloc
+			vloc.VisualX = h.Cursor.LastVisualX
+			h.Cursor.Loc = h.LocFromVLoc(vloc)
+		}
+	}
+}
+
+// MoveCursorDown is not an action
+func (h *BufPane) MoveCursorDown(n int) {
+	if !h.Buf.Settings["softwrap"].(bool) {
+		h.Cursor.DownN(n)
+	} else {
+		vloc := h.VLocFromLoc(h.Cursor.Loc)
+		sloc := h.Scroll(vloc.SLoc, n)
+		if sloc == vloc.SLoc {
+			// we are at the end of buffer
+			h.Cursor.Loc = h.Buf.End()
+			vloc = h.VLocFromLoc(h.Cursor.Loc)
+			h.Cursor.LastVisualX = vloc.VisualX
+		} else {
+			vloc.SLoc = sloc
+			vloc.VisualX = h.Cursor.LastVisualX
+			h.Cursor.Loc = h.LocFromVLoc(vloc)
+		}
+	}
 }
 
 // CursorUp moves the cursor up
 func (h *BufPane) CursorUp() bool {
 	h.Cursor.Deselect(true)
-	h.Cursor.Up()
+	h.MoveCursorUp(1)
 	h.Relocate()
 	return true
 }
@@ -134,7 +173,7 @@ func (h *BufPane) CursorUp() bool {
 // CursorDown moves the cursor down
 func (h *BufPane) CursorDown() bool {
 	h.Cursor.Deselect(true)
-	h.Cursor.Down()
+	h.MoveCursorDown(1)
 	h.Relocate()
 	return true
 }
@@ -212,7 +251,7 @@ func (h *BufPane) SelectUp() bool {
 	if !h.Cursor.HasSelection() {
 		h.Cursor.OrigSelection[0] = h.Cursor.Loc
 	}
-	h.Cursor.Up()
+	h.MoveCursorUp(1)
 	h.Cursor.SelectTo(h.Cursor.Loc)
 	h.Relocate()
 	return true
@@ -223,7 +262,7 @@ func (h *BufPane) SelectDown() bool {
 	if !h.Cursor.HasSelection() {
 		h.Cursor.OrigSelection[0] = h.Cursor.Loc
 	}
-	h.Cursor.Down()
+	h.MoveCursorDown(1)
 	h.Cursor.SelectTo(h.Cursor.Loc)
 	h.Relocate()
 	return true
@@ -847,21 +886,24 @@ func (h *BufPane) find(useRegex bool) bool {
 	if useRegex {
 		prompt = "Find (regex): "
 	}
-	InfoBar.Prompt(prompt, "", "Find", func(resp string) {
-		// Event callback
-		match, found, _ := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
-		if found {
-			h.Cursor.SetSelectionStart(match[0])
-			h.Cursor.SetSelectionEnd(match[1])
-			h.Cursor.OrigSelection[0] = h.Cursor.CurSelection[0]
-			h.Cursor.OrigSelection[1] = h.Cursor.CurSelection[1]
-			h.Cursor.GotoLoc(match[1])
-		} else {
-			h.Cursor.GotoLoc(h.searchOrig)
-			h.Cursor.ResetSelection()
+	var eventCallback func(resp string)
+	if h.Buf.Settings["incsearch"].(bool) {
+		eventCallback = func(resp string) {
+			match, found, _ := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
+			if found {
+				h.Cursor.SetSelectionStart(match[0])
+				h.Cursor.SetSelectionEnd(match[1])
+				h.Cursor.OrigSelection[0] = h.Cursor.CurSelection[0]
+				h.Cursor.OrigSelection[1] = h.Cursor.CurSelection[1]
+				h.Cursor.GotoLoc(match[1])
+			} else {
+				h.Cursor.GotoLoc(h.searchOrig)
+				h.Cursor.ResetSelection()
+			}
+			h.Relocate()
 		}
-		h.Relocate()
-	}, func(resp string, canceled bool) {
+	}
+	InfoBar.Prompt(prompt, "", "Find", eventCallback, func(resp string, canceled bool) {
 		// Finished callback
 		if !canceled {
 			match, found, err := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
@@ -1166,7 +1208,7 @@ func (h *BufPane) paste(clip string) {
 	if h.Buf.Settings["smartpaste"].(bool) {
 		if h.Cursor.X > 0 && len(util.GetLeadingWhitespace([]byte(strings.TrimLeft(clip, "\r\n")))) == 0 {
 			leadingWS := util.GetLeadingWhitespace(h.Buf.LineBytes(h.Cursor.Y))
-			clip = strings.Replace(clip, "\n", "\n"+string(leadingWS), -1)
+			clip = strings.ReplaceAll(clip, "\n", "\n"+string(leadingWS))
 		}
 	}
 
@@ -1195,6 +1237,7 @@ func (h *BufPane) JumpToMatchingBrace() bool {
 				} else {
 					h.Cursor.GotoLoc(matchingBrace.Move(1, h.Buf))
 				}
+				break
 			} else {
 				return false
 			}
@@ -1239,45 +1282,29 @@ func (h *BufPane) JumpLine() bool {
 // Start moves the viewport to the start of the buffer
 func (h *BufPane) Start() bool {
 	v := h.GetView()
-	v.StartLine = 0
+	v.StartLine = display.SLoc{0, 0}
 	h.SetView(v)
 	return true
 }
 
 // End moves the viewport to the end of the buffer
 func (h *BufPane) End() bool {
-	// TODO: softwrap problems?
 	v := h.GetView()
-	if v.Height > h.Buf.LinesNum() {
-		v.StartLine = 0
-		h.SetView(v)
-	} else {
-		v.StartLine = h.Buf.LinesNum() - v.Height
-		h.SetView(v)
-	}
+	v.StartLine = h.Scroll(h.SLocFromLoc(h.Buf.End()), -h.BufView().Height+1)
+	h.SetView(v)
 	return true
 }
 
 // PageUp scrolls the view up a page
 func (h *BufPane) PageUp() bool {
-	v := h.GetView()
-	if v.StartLine > v.Height {
-		h.ScrollUp(v.Height)
-	} else {
-		v.StartLine = 0
-	}
-	h.SetView(v)
+	h.ScrollUp(h.BufView().Height)
 	return true
 }
 
 // PageDown scrolls the view down a page
 func (h *BufPane) PageDown() bool {
-	v := h.GetView()
-	if h.Buf.LinesNum()-(v.StartLine+v.Height) > v.Height {
-		h.ScrollDown(v.Height)
-	} else if h.Buf.LinesNum() >= v.Height {
-		v.StartLine = h.Buf.LinesNum() - v.Height
-	}
+	h.ScrollDown(h.BufView().Height)
+	h.ScrollAdjust()
 	return true
 }
 
@@ -1286,7 +1313,7 @@ func (h *BufPane) SelectPageUp() bool {
 	if !h.Cursor.HasSelection() {
 		h.Cursor.OrigSelection[0] = h.Cursor.Loc
 	}
-	h.Cursor.UpN(h.GetView().Height)
+	h.MoveCursorUp(h.BufView().Height)
 	h.Cursor.SelectTo(h.Cursor.Loc)
 	h.Relocate()
 	return true
@@ -1297,7 +1324,7 @@ func (h *BufPane) SelectPageDown() bool {
 	if !h.Cursor.HasSelection() {
 		h.Cursor.OrigSelection[0] = h.Cursor.Loc
 	}
-	h.Cursor.DownN(h.GetView().Height)
+	h.MoveCursorDown(h.BufView().Height)
 	h.Cursor.SelectTo(h.Cursor.Loc)
 	h.Relocate()
 	return true
@@ -1312,7 +1339,7 @@ func (h *BufPane) CursorPageUp() bool {
 		h.Cursor.ResetSelection()
 		h.Cursor.StoreVisualX()
 	}
-	h.Cursor.UpN(h.GetView().Height)
+	h.MoveCursorUp(h.BufView().Height)
 	h.Relocate()
 	return true
 }
@@ -1326,34 +1353,21 @@ func (h *BufPane) CursorPageDown() bool {
 		h.Cursor.ResetSelection()
 		h.Cursor.StoreVisualX()
 	}
-	h.Cursor.DownN(h.GetView().Height)
+	h.MoveCursorDown(h.BufView().Height)
 	h.Relocate()
 	return true
 }
 
 // HalfPageUp scrolls the view up half a page
 func (h *BufPane) HalfPageUp() bool {
-	v := h.GetView()
-	if v.StartLine > v.Height/2 {
-		h.ScrollUp(v.Height / 2)
-	} else {
-		v.StartLine = 0
-	}
-	h.SetView(v)
+	h.ScrollUp(h.BufView().Height / 2)
 	return true
 }
 
 // HalfPageDown scrolls the view down half a page
 func (h *BufPane) HalfPageDown() bool {
-	v := h.GetView()
-	if h.Buf.LinesNum()-(v.StartLine+v.Height) > v.Height/2 {
-		h.ScrollDown(v.Height / 2)
-	} else {
-		if h.Buf.LinesNum() >= v.Height {
-			v.StartLine = h.Buf.LinesNum() - v.Height
-		}
-	}
-	h.SetView(v)
+	h.ScrollDown(h.BufView().Height / 2)
+	h.ScrollAdjust()
 	return true
 }
 
@@ -1452,39 +1466,43 @@ func (h *BufPane) ClearInfo() bool {
 	return true
 }
 
+// ForceQuit closes the current tab or view even if there are unsaved changes
+// (no prompt)
+func (h *BufPane) ForceQuit() bool {
+	h.Buf.Close()
+	if len(MainTab().Panes) > 1 {
+		h.Unsplit()
+	} else if len(Tabs.List) > 1 {
+		Tabs.RemoveTab(h.splitID)
+	} else {
+		screen.Screen.Fini()
+		InfoBar.Close()
+		runtime.Goexit()
+	}
+	return true
+}
+
 // Quit this will close the current tab or view that is open
 func (h *BufPane) Quit() bool {
-	quit := func() {
-		h.Buf.Close()
-		if len(MainTab().Panes) > 1 {
-			h.Unsplit()
-		} else if len(Tabs.List) > 1 {
-			Tabs.RemoveTab(h.splitID)
-		} else {
-			screen.Screen.Fini()
-			InfoBar.Close()
-			runtime.Goexit()
-		}
-	}
 	if h.Buf.Modified() {
 		if config.GlobalSettings["autosave"].(float64) > 0 {
 			// autosave on means we automatically save when quitting
 			h.SaveCB("Quit", func() {
-				quit()
+				h.ForceQuit()
 			})
 		} else {
 			InfoBar.YNPrompt("Save changes to "+h.Buf.GetName()+" before closing? (y,n,esc)", func(yes, canceled bool) {
 				if !canceled && !yes {
-					quit()
+					h.ForceQuit()
 				} else if !canceled && yes {
 					h.SaveCB("Quit", func() {
-						quit()
+						h.ForceQuit()
 					})
 				}
 			})
 		}
 	} else {
-		quit()
+		h.ForceQuit()
 	}
 	return true
 }

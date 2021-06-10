@@ -3,6 +3,7 @@ package action
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -61,7 +62,11 @@ func InitBindings() {
 		case string:
 			BindKey(k, val, Binder["buffer"])
 		case map[string]interface{}:
-			bind := Binder[k]
+			bind, ok := Binder[k]
+			if !ok || bind == nil {
+				screen.TermMessage(fmt.Sprintf("%s is not a valid pane type", k))
+				continue
+			}
 			for e, a := range val {
 				s, ok := a.(string)
 				if !ok {
@@ -82,8 +87,6 @@ func BindKey(k, v string, bind func(e Event, a string)) {
 		screen.TermMessage(err)
 		return
 	}
-
-	config.Bindings[event.Name()] = v
 
 	bind(event, v)
 
@@ -240,7 +243,7 @@ func findEvent(k string) (Event, error) {
 // Returns true if the keybinding already existed and a possible error
 func TryBindKey(k, v string, overwrite bool) (bool, error) {
 	var e error
-	var parsed map[string]string
+	var parsed map[string]interface{}
 
 	filename := filepath.Join(config.ConfigDir, "bindings.json")
 	createBindingsIfNotExist(filename)
@@ -290,7 +293,7 @@ func TryBindKey(k, v string, overwrite bool) (bool, error) {
 // UnbindKey removes the binding for a key from the bindings.json file
 func UnbindKey(k string) error {
 	var e error
-	var parsed map[string]string
+	var parsed map[string]interface{}
 
 	filename := filepath.Join(config.ConfigDir, "bindings.json")
 	createBindingsIfNotExist(filename)
@@ -322,9 +325,9 @@ func UnbindKey(k string) error {
 		defaults := DefaultBindings("buffer")
 		if a, ok := defaults[k]; ok {
 			BindKey(k, a, Binder["buffer"])
-		} else if _, ok := config.Bindings[k]; ok {
+		} else if _, ok := config.Bindings["buffer"][k]; ok {
 			BufUnmap(key)
-			delete(config.Bindings, k)
+			delete(config.Bindings["buffer"], k)
 		}
 
 		txt, _ := json.MarshalIndent(parsed, "", "    ")

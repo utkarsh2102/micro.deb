@@ -62,6 +62,8 @@ func LuaAction(fn string) func(*BufPane) bool {
 
 // BufMapKey maps an event to an action
 func BufMapEvent(k Event, action string) {
+	config.Bindings["buffer"][k.Name()] = action
+
 	switch e := k.(type) {
 	case KeyEvent, KeySequenceEvent, RawEvent:
 		bufMapKey(e, action)
@@ -664,6 +666,7 @@ var BufKeyActions = map[string]BufKeyAction{
 	"Escape":                    (*BufPane).Escape,
 	"Quit":                      (*BufPane).Quit,
 	"QuitAll":                   (*BufPane).QuitAll,
+	"ForceQuit":                 (*BufPane).ForceQuit,
 	"AddTab":                    (*BufPane).AddTab,
 	"PreviousTab":               (*BufPane).PreviousTab,
 	"NextTab":                   (*BufPane).NextTab,
