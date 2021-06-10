@@ -269,7 +269,8 @@ var defaultCommonSettings = map[string]interface{}{
 	"fastdirty":      false,
 	"fileformat":     "unix",
 	"filetype":       "unknown",
-	"ignorecase":     false,
+	"incsearch":      true,
+	"ignorecase":     true,
 	"indentchar":     " ",
 	"keepautoindent": false,
 	"matchbrace":     true,
@@ -296,6 +297,7 @@ var defaultCommonSettings = map[string]interface{}{
 	"tabsize":        float64(4),
 	"tabstospaces":   false,
 	"useprimary":     true,
+	"wordwrap":       false,
 }
 
 func GetInfoBarOffset() int {

@@ -159,9 +159,13 @@ Here are the available options:
 	default value: `unknown`. This will be automatically overridden depending
     on the file you open.
 
+* `incsearch`: enable incremental search in "Find" prompt (matching as you type).
+
+	default value: `true`
+
 * `ignorecase`: perform case-insensitive searches.
 
-	default value: `false`
+	default value: `true`
 
 * `indentchar`: sets the indentation character.
 
@@ -361,6 +365,11 @@ Here are the available options:
 
 	default value: `true`
 
+* `wordwrap`: wrap long lines by words, i.e. break at spaces. This option
+   only does anything if `softwrap` is on.
+
+	default value: `false`
+
 * `xterm`: micro will assume that the terminal it is running in conforms to
   `xterm-256color` regardless of what the `$TERM` variable actually contains.
    Enabling this option may cause unwanted effects if your terminal in fact
@@ -423,6 +432,7 @@ so that you can see what the formatting should look like.
     "fastdirty": false,
     "fileformat": "unix",
     "filetype": "unknown",
+    "incsearch": true,
     "ftoptions": true,
     "ignorecase": false,
     "indentchar": " ",
